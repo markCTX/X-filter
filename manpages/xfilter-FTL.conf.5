@@ -1,11 +1,11 @@
-.TH "pihole-FTL.conf" "5" "pihole-FTL.conf" "pihole-FTL.conf" "June 2018"
+.TH "xfilter-FTL.conf" "5" "xfilter-FTL.conf" "xfilter-FTL.conf" "June 2018"
 .SH "NAME"
 
-pihole-FTL.conf - FTL's config file
+xfilter-FTL.conf - FTL's config file
 .br
 .SH "DESCRIPTION"
 
-/etc/pihole/pihole-FTL.conf will be read by \fBpihole-FTL(8)\fR on startup.
+/etc/xfilter/xfilter-FTL.conf will be read by \fBxfilter-FTL(8)\fR on startup.
 .br
 
 \fBSOCKET_LISTENING=localonly|all\fR
@@ -20,7 +20,7 @@ pihole-FTL.conf - FTL's config file
 
 \fBAAAA_QUERY_ANALYSIS=yes|no\fR
 .br
-    Allow FTL to analyze AAAA queries from pihole.log?
+    Allow FTL to analyze AAAA queries from xfilter.log?
 .br
 
 \fBRESOLVE_IPV6=yes|no\fR
@@ -45,7 +45,7 @@ pihole-FTL.conf - FTL's config file
     How often do we store queries in FTL's database [minutes]?
 .br
 
-\fBDBFILE=/etc/pihole/pihole-FTL.db\fR
+\fBDBFILE=/etc/xfilter/xfilter-FTL.db\fR
 .br
     Specify path and filename of FTL's SQLite long-term database.
 .br
@@ -91,12 +91,12 @@ For each setting, the option shown first is the default.
 .br
 .SH "SEE ALSO"
 
-\fBpihole\fR(8), \fBpihole-FTL\fR(8)
+\fBxfilter\fR(8), \fBxfilter-FTL\fR(8)
 .br
 .SH "COLOPHON"
 
-Pi-hole : The Faster-Than-Light (FTL) Engine is a lightweight, purpose-built daemon used to provide statistics needed for the Pi-hole Web Interface, and its API can be easily integrated into your own projects. Although it is an optional component of the Pi-hole ecosystem, it will be installed by default to provide statistics. As the name implies, FTL does its work \fIvery quickly\fR!
+X-filter : The Faster-Than-Light (FTL) Engine is a lightweight, purpose-built daemon used to provide statistics needed for the X-filter Web Interface, and its API can be easily integrated into your own projects. Although it is an optional component of the X-filter ecosystem, it will be installed by default to provide statistics. As the name implies, FTL does its work \fIvery quickly\fR!
 .br
 
-Get sucked into the latest news and community activity by entering Pi-hole's orbit. Information about Pi-hole, and the latest version of the software can be found at https://pi-hole.net
+Get sucked into the latest news and community activity by entering X-filter's orbit. Information about X-filter, and the latest version of the software can be found at https://x-filter.net
 .br

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Checks for local or remote versions and branches
@@ -39,7 +39,7 @@ function get_local_version() {
 
 # Source the setupvars config file
 # shellcheck disable=SC1091
-. /etc/pihole/setupVars.conf
+. /etc/xfilter/setupVars.conf
 
 if [[ "$2" == "remote" ]]; then
 
@@ -47,24 +47,24 @@ if [[ "$2" == "remote" ]]; then
         sleep 30
     fi
 
-    GITHUB_VERSION_FILE="/etc/pihole/GitHubVersions"
+    GITHUB_VERSION_FILE="/etc/xfilter/GitHubVersions"
 
-    GITHUB_CORE_VERSION="$(json_extract tag_name "$(curl -s 'https://api.github.com/repos/pi-hole/pi-hole/releases/latest' 2> /dev/null)")"
+    GITHUB_CORE_VERSION="$(json_extract tag_name "$(curl -s 'https://api.github.com/repos/x-filter/x-filter/releases/latest' 2> /dev/null)")"
     echo -n "${GITHUB_CORE_VERSION}" > "${GITHUB_VERSION_FILE}"
 
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
-        GITHUB_WEB_VERSION="$(json_extract tag_name "$(curl -s 'https://api.github.com/repos/pi-hole/AdminLTE/releases/latest' 2> /dev/null)")"
+        GITHUB_WEB_VERSION="$(json_extract tag_name "$(curl -s 'https://api.github.com/repos/x-filter/AdminLTE/releases/latest' 2> /dev/null)")"
         echo -n " ${GITHUB_WEB_VERSION}" >> "${GITHUB_VERSION_FILE}"
     fi
 
-    GITHUB_FTL_VERSION="$(json_extract tag_name "$(curl -s 'https://api.github.com/repos/pi-hole/FTL/releases/latest' 2> /dev/null)")"
+    GITHUB_FTL_VERSION="$(json_extract tag_name "$(curl -s 'https://api.github.com/repos/x-filter/FTL/releases/latest' 2> /dev/null)")"
     echo -n " ${GITHUB_FTL_VERSION}" >> "${GITHUB_VERSION_FILE}"
 
 else
 
-    LOCAL_BRANCH_FILE="/etc/pihole/localbranches"
+    LOCAL_BRANCH_FILE="/etc/xfilter/localbranches"
 
-    CORE_BRANCH="$(get_local_branch /etc/.pihole)"
+    CORE_BRANCH="$(get_local_branch /etc/.xfilter)"
     echo -n "${CORE_BRANCH}" > "${LOCAL_BRANCH_FILE}"
 
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
@@ -72,12 +72,12 @@ else
         echo -n " ${WEB_BRANCH}" >> "${LOCAL_BRANCH_FILE}"
     fi
 
-    FTL_BRANCH="$(pihole-FTL branch)"
+    FTL_BRANCH="$(xfilter-FTL branch)"
     echo -n " ${FTL_BRANCH}" >> "${LOCAL_BRANCH_FILE}"
 
-    LOCAL_VERSION_FILE="/etc/pihole/localversions"
+    LOCAL_VERSION_FILE="/etc/xfilter/localversions"
 
-    CORE_VERSION="$(get_local_version /etc/.pihole)"
+    CORE_VERSION="$(get_local_version /etc/.xfilter)"
     echo -n "${CORE_VERSION}" > "${LOCAL_VERSION_FILE}"
 
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
@@ -85,7 +85,7 @@ else
         echo -n " ${WEB_VERSION}" >> "${LOCAL_VERSION_FILE}"
     fi
 
-    FTL_VERSION="$(pihole-FTL version)"
+    FTL_VERSION="$(xfilter-FTL version)"
     echo -n " ${FTL_VERSION}" >> "${LOCAL_VERSION_FILE}"
 
 fi

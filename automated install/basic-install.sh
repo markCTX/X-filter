@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090
 
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017-2018 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017-2018 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
-# Installs and Updates Pi-hole
+# Installs and Updates X-filter
 #
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
 
-# pi-hole.net/donate
+# x-filter.net/donate
 #
 # Install with this command (from your Linux machine):
 #
-# curl -sSL https://install.pi-hole.net | bash
+# curl -sSL https://install.x-filter.net | bash
 
 # -e option instructs bash to immediately exit if any command [1] has a non-zero exit status
 # We do not want users to end up with a partially working install, so we exit the script
@@ -29,30 +29,30 @@ set -e
 # It's still a work in progress, so you may see some variance in this guideline until it is complete
 
 # Location for final installation log storage
-installLogLoc=/etc/pihole/install.log
+installLogLoc=/etc/xfilter/install.log
 # This is an important file as it contains information specific to the machine it's being installed on
-setupVars=/etc/pihole/setupVars.conf
-# Pi-hole uses lighttpd as a Web server, and this is the config file for it
+setupVars=/etc/xfilter/setupVars.conf
+# X-filter uses lighttpd as a Web server, and this is the config file for it
 # shellcheck disable=SC2034
 lighttpdConfig=/etc/lighttpd/lighttpd.conf
 # This is a file used for the colorized output
-coltable=/opt/pihole/COL_TABLE
+coltable=/opt/xfilter/COL_TABLE
 
 # We store several other directories and
-webInterfaceGitUrl="https://github.com/pi-hole/AdminLTE.git"
+webInterfaceGitUrl="https://github.com/markCTX/AdminLTE.git"
 webInterfaceDir="/var/www/html/admin"
-piholeGitUrl="https://github.com/pi-hole/pi-hole.git"
-PI_HOLE_LOCAL_REPO="/etc/.pihole"
-# These are the names of pi-holes files, stored in an array
-PI_HOLE_FILES=(chronometer list piholeDebug piholeLogFlush setupLCD update version gravity uninstall webpage)
-# This directory is where the Pi-hole scripts will be installed
-PI_HOLE_INSTALL_DIR="/opt/pihole"
-PI_HOLE_CONFIG_DIR="/etc/pihole"
+xfilterGitUrl="https://github.com/markCTX/x-filter.git"
+X_FILTER_LOCAL_REPO="/etc/.xfilter"
+# These are the names of x-filters files, stored in an array
+X_FILTER_FILES=(chronometer list xfilterDebug xfilterLogFlush setupLCD update version gravity uninstall webpage)
+# This directory is where the X-filter scripts will be installed
+X_FILTER_INSTALL_DIR="/opt/xfilter"
+X_FILTER_CONFIG_DIR="/etc/xfilter"
 useUpdateVars=false
 
-adlistFile="/etc/pihole/adlists.list"
-regexFile="/etc/pihole/regex.list"
-# Pi-hole needs an IP address; to begin, these variables are empty since we don't know what the IP is until
+adlistFile="/etc/xfilter/adlists.list"
+regexFile="/etc/xfilter/regex.list"
+# X-filter needs an IP address; to begin, these variables are empty since we don't know what the IP is until
 # this script can run
 IPV4_ADDRESS=""
 IPV6_ADDRESS=""
@@ -116,7 +116,7 @@ else
 fi
 
 # A simple function that just echoes out our logo in ASCII format
-# This lets users know that it is a Pi-hole, LLC product
+# This lets users know that it is a X-filter, LLC product
 show_ascii_berry() {
   echo -e "
         ${COL_LIGHT_GREEN}.;;,.
@@ -206,11 +206,11 @@ if is_command apt-get ; then
     # Since our install script is so large, we need several other programs to successfully get a machine provisioned
     # These programs are stored in an array so they can be looped through later
     INSTALLER_DEPS=(apt-utils dialog debconf dhcpcd5 git ${iproute_pkg} whiptail)
-    # Pi-hole itself has several dependencies that also need to be installed
-    PIHOLE_DEPS=(bc cron curl dnsutils iputils-ping lsof netcat psmisc sudo unzip wget idn2 sqlite3 libcap2-bin dns-root-data resolvconf)
+    # X-filter itself has several dependencies that also need to be installed
+    XFILTER_DEPS=(bc cron curl dnsutils iputils-ping lsof netcat psmisc sudo unzip wget idn2 sqlite3 libcap2-bin dns-root-data resolvconf)
     # The Web dashboard has some that also need to be installed
     # It's useful to separate the two since our repos are also setup as "Core" code and "Web" code
-    PIHOLE_WEB_DEPS=(lighttpd ${phpVer}-common ${phpVer}-cgi ${phpVer}-${phpSqlite})
+    XFILTER_WEB_DEPS=(lighttpd ${phpVer}-common ${phpVer}-cgi ${phpVer}-${phpSqlite})
     # The Web server user,
     LIGHTTPD_USER="www-data"
     # group,
@@ -249,8 +249,8 @@ elif is_command rpm ; then
     PKG_INSTALL=(${PKG_MANAGER} install -y)
     PKG_COUNT="${PKG_MANAGER} check-update | egrep '(.i686|.x86|.noarch|.arm|.src)' | wc -l"
     INSTALLER_DEPS=(dialog git iproute newt procps-ng which)
-    PIHOLE_DEPS=(bc bind-utils cronie curl findutils nmap-ncat sudo unzip wget libidn2 psmisc)
-    PIHOLE_WEB_DEPS=(lighttpd lighttpd-fastcgi php-common php-cli php-pdo)
+    XFILTER_DEPS=(bc bind-utils cronie curl findutils nmap-ncat sudo unzip wget libidn2 psmisc)
+    XFILTER_WEB_DEPS=(lighttpd lighttpd-fastcgi php-common php-cli php-pdo)
     LIGHTTPD_USER="lighttpd"
     LIGHTTPD_GROUP="lighttpd"
     LIGHTTPD_CFG="lighttpd.conf.fedora"
@@ -258,10 +258,10 @@ elif is_command rpm ; then
     if grep -qiE 'fedora|fedberry' /etc/redhat-release; then
         # all required packages should be available by default with the latest fedora release
         # ensure 'php-json' is installed on Fedora (installed as dependency on CentOS7 + Remi repository)
-        PIHOLE_WEB_DEPS+=('php-json')
+        XFILTER_WEB_DEPS+=('php-json')
     # or if host OS is CentOS,
     elif grep -qiE 'centos|scientific' /etc/redhat-release; then
-        # Pi-Hole currently supports CentOS 7+ with PHP7+
+        # X-Filter currently supports CentOS 7+ with PHP7+
         SUPPORTED_CENTOS_VERSION=7
         SUPPORTED_CENTOS_PHP_VERSION=7
         # Check current CentOS major release version
@@ -502,13 +502,13 @@ get_available_interfaces() {
 # A function for displaying the dialogs the user sees when first running the installer
 welcomeDialogs() {
     # Display the welcome dialog using an appropriately sized window via the calculation conducted earlier in the script
-    whiptail --msgbox --backtitle "Welcome" --title "Pi-hole automated installer" "\\n\\nThis installer will transform your device into a network-wide ad blocker!" ${r} ${c}
+    whiptail --msgbox --backtitle "Welcome" --title "X-filter automated installer" "\\n\\nThis installer will transform your device into a network-wide ad blocker!" ${r} ${c}
 
     # Request that users donate if they enjoy the software since we all work on it in our free time
-    whiptail --msgbox --backtitle "Plea" --title "Free and open source" "\\n\\nThe Pi-hole is free, but powered by your donations:  http://pi-hole.net/donate" ${r} ${c}
+    whiptail --msgbox --backtitle "Plea" --title "Free and open source" "\\n\\nThe X-filter is free, but powered by your donations:  http://x-filter.net/donate" ${r} ${c}
 
     # Explain the need for a static address
-    whiptail --msgbox --backtitle "Initiating network interface" --title "Static IP Needed" "\\n\\nThe Pi-hole is a SERVER so it needs a STATIC IP ADDRESS to function properly.
+    whiptail --msgbox --backtitle "Initiating network interface" --title "Static IP Needed" "\\n\\nThe X-filter is a SERVER so it needs a STATIC IP ADDRESS to function properly.
 
 In the next section, you can choose to use your current network settings (DHCP) or to manually edit them." ${r} ${c}
 }
@@ -532,7 +532,7 @@ verifyFreeDiskSpace() {
         printf "      We were unable to determine available free disk space on this system.\\n"
         printf "      You may override this check, however, it is not recommended.\\n"
         printf "      The option '%b--i_do_not_follow_recommendations%b' can override this.\\n" "${COL_LIGHT_RED}" "${COL_NC}"
-        printf "      e.g: curl -L https://install.pi-hole.net | bash /dev/stdin %b<option>%b\\n" "${COL_LIGHT_RED}" "${COL_NC}"
+        printf "      e.g: curl -L https://install.x-filter.net | bash /dev/stdin %b<option>%b\\n" "${COL_LIGHT_RED}" "${COL_NC}"
         # exit with an error code
         exit 1
     # If there is insufficient free disk space,
@@ -540,14 +540,14 @@ verifyFreeDiskSpace() {
         # show an error message
         printf "  %b %s\\n" "${CROSS}" "${str}"
         printf "  %b Your system disk appears to only have %s KB free\\n" "${INFO}" "${existing_free_kilobytes}"
-        printf "      It is recommended to have a minimum of %s KB to run the Pi-hole\\n" "${required_free_kilobytes}"
+        printf "      It is recommended to have a minimum of %s KB to run the X-filter\\n" "${required_free_kilobytes}"
         # if the vcgencmd command exists,
         if is_command vcgencmd ; then
             # it's probably a Raspbian install, so show a message about expanding the filesystem
             printf "      If this is a new install you may need to expand your disk\\n"
             printf "      Run 'sudo raspi-config', and choose the 'expand file system' option\\n"
             printf "      After rebooting, run this installation again\\n"
-            printf "      e.g: curl -L https://install.pi-hole.net | bash\\n"
+            printf "      e.g: curl -L https://install.x-filter.net | bash\\n"
         fi
         # Show there is not enough free space
         printf "\\n      %bInsufficient free space, exiting...%b\\n" "${COL_LIGHT_RED}" "${COL_NC}"
@@ -560,7 +560,7 @@ verifyFreeDiskSpace() {
     fi
 }
 
-# A function that let's the user pick an interface to use with Pi-hole
+# A function that let's the user pick an interface to use with X-filter
 chooseInterface() {
     # Turn the available interfaces into an array so it can be used with a whiptail dialog
     local interfacesArray=()
@@ -579,7 +579,7 @@ chooseInterface() {
     # If there is one interface,
     if [[ "${interfaceCount}" -eq 1 ]]; then
         # Set it as the interface to use since there is no other option
-        PIHOLE_INTERFACE="${availableInterfaces}"
+        XFILTER_INTERFACE="${availableInterfaces}"
     # Otherwise,
     else
         # While reading through the available interfaces
@@ -605,16 +605,16 @@ chooseInterface() {
         # For each interface
         for desiredInterface in ${chooseInterfaceOptions}; do
             # Set the one the user selected as the interface to use
-            PIHOLE_INTERFACE=${desiredInterface}
+            XFILTER_INTERFACE=${desiredInterface}
             # and show this information to the user
-            printf "  %b Using interface: %s\\n" "${INFO}" "${PIHOLE_INTERFACE}"
+            printf "  %b Using interface: %s\\n" "${INFO}" "${XFILTER_INTERFACE}"
         done
     fi
 }
 
 # This lets us prefer ULA addresses over GUA
 # This caused problems for some users when their ISP changed their IPv6 addresses
-# See https://github.com/pi-hole/pi-hole/issues/1473#issuecomment-301745953
+# See https://github.com/markCTX/x-filter/issues/1473#issuecomment-301745953
 testIPv6() {
     # first will contain fda2 (ULA)
     printf -v first "%s" "${1%%:*}"
@@ -784,12 +784,12 @@ setDHCPCD() {
     # If it's not,
     else
         # we can append these lines to dhcpcd.conf to enable a static IP
-        echo "interface ${PIHOLE_INTERFACE}
+        echo "interface ${XFILTER_INTERFACE}
         static ip_address=${IPV4_ADDRESS}
         static routers=${IPv4gw}
         static domain_name_servers=127.0.0.1" | tee -a /etc/dhcpcd.conf >/dev/null
         # Then use the ip command to immediately set the new address
-        ip addr replace dev "${PIHOLE_INTERFACE}" "${IPV4_ADDRESS}"
+        ip addr replace dev "${XFILTER_INTERFACE}" "${IPV4_ADDRESS}"
         # Also give a warning that the user may need to reboot their system
         printf "  %b Set IP address to %s \\n  You may need to restart after the install is complete\\n" "${TICK}" "${IPV4_ADDRESS%/*}"
     fi
@@ -812,22 +812,22 @@ setIFCFG() {
         # Put the IP in variables without the CIDR notation
         printf -v CIDR "%s" "${IPV4_ADDRESS##*/}"
         # Backup existing interface configuration:
-        cp "${IFCFG_FILE}" "${IFCFG_FILE}".pihole.orig
+        cp "${IFCFG_FILE}" "${IFCFG_FILE}".xfilter.orig
         # Build Interface configuration file using the GLOBAL variables we have
         {
-        echo "# Configured via Pi-hole installer"
-        echo "DEVICE=$PIHOLE_INTERFACE"
+        echo "# Configured via X-filter installer"
+        echo "DEVICE=$XFILTER_INTERFACE"
         echo "BOOTPROTO=none"
         echo "ONBOOT=yes"
         echo "IPADDR=$IPADDR"
         echo "PREFIX=$CIDR"
         echo "GATEWAY=$IPv4gw"
-        echo "DNS1=$PIHOLE_DNS_1"
-        echo "DNS2=$PIHOLE_DNS_2"
+        echo "DNS1=$XFILTER_DNS_1"
+        echo "DNS2=$XFILTER_DNS_2"
         echo "USERCTL=no"
         }> "${IFCFG_FILE}"
         # Use ip to immediately set the new address
-        ip addr replace dev "${PIHOLE_INTERFACE}" "${IPV4_ADDRESS}"
+        ip addr replace dev "${XFILTER_INTERFACE}" "${IPV4_ADDRESS}"
         # If NetworkMangler command line interface exists and ready to mangle,
         if is_command nmcli && nmcli general status &> /dev/null; then
             # Tell NetworkManagler to read our new sysconfig file
@@ -849,15 +849,15 @@ setStaticIPv4() {
         return 0
     fi
     # If a DHCPCD config file was not found, check for an ifcfg config file based on interface name
-    if [[ -f "/etc/sysconfig/network-scripts/ifcfg-${PIHOLE_INTERFACE}" ]];then
+    if [[ -f "/etc/sysconfig/network-scripts/ifcfg-${XFILTER_INTERFACE}" ]];then
         # If it exists,
-        IFCFG_FILE=/etc/sysconfig/network-scripts/ifcfg-${PIHOLE_INTERFACE}
+        IFCFG_FILE=/etc/sysconfig/network-scripts/ifcfg-${XFILTER_INTERFACE}
         setIFCFG "${IFCFG_FILE}"
         return 0
     fi
     # if an ifcfg config does not exists for the interface name, try the connection name via network manager
     if is_command nmcli && nmcli general status &> /dev/null; then
-        CONNECTION_NAME=$(nmcli dev show "${PIHOLE_INTERFACE}" | grep 'GENERAL.CONNECTION' | cut -d: -f2 | sed 's/^System//' | xargs | tr ' ' '_')
+        CONNECTION_NAME=$(nmcli dev show "${XFILTER_INTERFACE}" | grep 'GENERAL.CONNECTION' | cut -d: -f2 | sed 's/^System//' | xargs | tr ' ' '_')
         if [[ -f "/etc/sysconfig/network-scripts/ifcfg-${CONNECTION_NAME}" ]];then
             # If it exists,
             IFCFG_FILE=/etc/sysconfig/network-scripts/ifcfg-${CONNECTION_NAME}
@@ -923,43 +923,43 @@ setDNS() {
     case ${DNSchoices} in
         Google)
             printf "Google DNS servers\\n"
-            PIHOLE_DNS_1="8.8.8.8"
-            PIHOLE_DNS_2="8.8.4.4"
+            XFILTER_DNS_1="8.8.8.8"
+            XFILTER_DNS_2="8.8.4.4"
             ;;
         OpenDNS)
             printf "OpenDNS servers\\n"
-            PIHOLE_DNS_1="208.67.222.222"
-            PIHOLE_DNS_2="208.67.220.220"
+            XFILTER_DNS_1="208.67.222.222"
+            XFILTER_DNS_2="208.67.220.220"
             ;;
         Level3)
             printf "Level3 servers\\n"
-            PIHOLE_DNS_1="4.2.2.1"
-            PIHOLE_DNS_2="4.2.2.2"
+            XFILTER_DNS_1="4.2.2.1"
+            XFILTER_DNS_2="4.2.2.2"
             ;;
         Comodo)
             printf "Comodo Secure servers\\n"
-            PIHOLE_DNS_1="8.26.56.26"
-            PIHOLE_DNS_2="8.20.247.20"
+            XFILTER_DNS_1="8.26.56.26"
+            XFILTER_DNS_2="8.20.247.20"
             ;;
         DNSWatch)
             printf "DNS.WATCH servers\\n"
-            PIHOLE_DNS_1="84.200.69.80"
-            PIHOLE_DNS_2="84.200.70.40"
+            XFILTER_DNS_1="84.200.69.80"
+            XFILTER_DNS_2="84.200.70.40"
             ;;
         Quad9)
             printf "Quad9 servers\\n"
-            PIHOLE_DNS_1="9.9.9.9"
-            PIHOLE_DNS_2="149.112.112.112"
+            XFILTER_DNS_1="9.9.9.9"
+            XFILTER_DNS_2="149.112.112.112"
             ;;
         FamilyShield)
             printf "FamilyShield servers\\n"
-            PIHOLE_DNS_1="208.67.222.123"
-            PIHOLE_DNS_2="208.67.220.123"
+            XFILTER_DNS_1="208.67.222.123"
+            XFILTER_DNS_2="208.67.220.123"
             ;;
         Cloudflare)
             printf "Cloudflare servers\\n"
-            PIHOLE_DNS_1="1.1.1.1"
-            PIHOLE_DNS_2="1.0.0.1"
+            XFILTER_DNS_1="1.1.1.1"
+            XFILTER_DNS_2="1.0.0.1"
             ;;
         Custom)
             # Until the DNS settings are selected,
@@ -967,55 +967,55 @@ setDNS() {
                 #
                 strInvalid="Invalid"
                 # If the first
-                if [[ ! "${PIHOLE_DNS_1}" ]]; then
+                if [[ ! "${XFILTER_DNS_1}" ]]; then
                     # and second upstream servers do not exist
-                    if [[ ! "${PIHOLE_DNS_2}" ]]; then
+                    if [[ ! "${XFILTER_DNS_2}" ]]; then
                         prePopulate=""
                     # Otherwise,
                     else
-                        prePopulate=", ${PIHOLE_DNS_2}"
+                        prePopulate=", ${XFILTER_DNS_2}"
                     fi
-                elif  [[ "${PIHOLE_DNS_1}" ]] && [[ ! "${PIHOLE_DNS_2}" ]]; then
-                    prePopulate="${PIHOLE_DNS_1}"
-                elif [[ "${PIHOLE_DNS_1}" ]] && [[ "${PIHOLE_DNS_2}" ]]; then
-                    prePopulate="${PIHOLE_DNS_1}, ${PIHOLE_DNS_2}"
+                elif  [[ "${XFILTER_DNS_1}" ]] && [[ ! "${XFILTER_DNS_2}" ]]; then
+                    prePopulate="${XFILTER_DNS_1}"
+                elif [[ "${XFILTER_DNS_1}" ]] && [[ "${XFILTER_DNS_2}" ]]; then
+                    prePopulate="${XFILTER_DNS_1}, ${XFILTER_DNS_2}"
                 fi
 
                 # Dialog for the user to enter custom upstream servers
-                piholeDNS=$(whiptail --backtitle "Specify Upstream DNS Provider(s)"  --inputbox "Enter your desired upstream DNS provider(s), separated by a comma.\\n\\nFor example '8.8.8.8, 8.8.4.4'" ${r} ${c} "${prePopulate}" 3>&1 1>&2 2>&3) || \
+                xfilterDNS=$(whiptail --backtitle "Specify Upstream DNS Provider(s)"  --inputbox "Enter your desired upstream DNS provider(s), separated by a comma.\\n\\nFor example '8.8.8.8, 8.8.4.4'" ${r} ${c} "${prePopulate}" 3>&1 1>&2 2>&3) || \
                 { printf "  %bCancel was selected, exiting installer%b\\n" "${COL_LIGHT_RED}" "${COL_NC}"; exit 1; }
                 # Clean user input and replace whitespace with comma.
-                piholeDNS=$(sed 's/[, \t]\+/,/g' <<< "${piholeDNS}")
+                xfilterDNS=$(sed 's/[, \t]\+/,/g' <<< "${xfilterDNS}")
 
-                printf -v PIHOLE_DNS_1 "%s" "${piholeDNS%%,*}"
-                printf -v PIHOLE_DNS_2 "%s" "${piholeDNS##*,}"
+                printf -v XFILTER_DNS_1 "%s" "${xfilterDNS%%,*}"
+                printf -v XFILTER_DNS_2 "%s" "${xfilterDNS##*,}"
 
                 # If the IP is valid,
-                if ! valid_ip "${PIHOLE_DNS_1}" || [[ ! "${PIHOLE_DNS_1}" ]]; then
+                if ! valid_ip "${XFILTER_DNS_1}" || [[ ! "${XFILTER_DNS_1}" ]]; then
                     # store it in the variable so we can use it
-                    PIHOLE_DNS_1=${strInvalid}
+                    XFILTER_DNS_1=${strInvalid}
                 fi
                 # Do the same for the secondary server
-                if ! valid_ip "${PIHOLE_DNS_2}" && [[ "${PIHOLE_DNS_2}" ]]; then
-                    PIHOLE_DNS_2=${strInvalid}
+                if ! valid_ip "${XFILTER_DNS_2}" && [[ "${XFILTER_DNS_2}" ]]; then
+                    XFILTER_DNS_2=${strInvalid}
                 fi
                 # If either of the DNS servers are invalid,
-                if [[ "${PIHOLE_DNS_1}" == "${strInvalid}" ]] || [[ "${PIHOLE_DNS_2}" == "${strInvalid}" ]]; then
+                if [[ "${XFILTER_DNS_1}" == "${strInvalid}" ]] || [[ "${XFILTER_DNS_2}" == "${strInvalid}" ]]; then
                     # explain this to the user
-                    whiptail --msgbox --backtitle "Invalid IP" --title "Invalid IP" "One or both entered IP addresses were invalid. Please try again.\\n\\n    DNS Server 1:   $PIHOLE_DNS_1\\n    DNS Server 2:   ${PIHOLE_DNS_2}" ${r} ${c}
+                    whiptail --msgbox --backtitle "Invalid IP" --title "Invalid IP" "One or both entered IP addresses were invalid. Please try again.\\n\\n    DNS Server 1:   $XFILTER_DNS_1\\n    DNS Server 2:   ${XFILTER_DNS_2}" ${r} ${c}
                     # and set the variables back to nothing
-                    if [[ "${PIHOLE_DNS_1}" == "${strInvalid}" ]]; then
-                        PIHOLE_DNS_1=""
+                    if [[ "${XFILTER_DNS_1}" == "${strInvalid}" ]]; then
+                        XFILTER_DNS_1=""
                     fi
-                    if [[ "${PIHOLE_DNS_2}" == "${strInvalid}" ]]; then
-                        PIHOLE_DNS_2=""
+                    if [[ "${XFILTER_DNS_2}" == "${strInvalid}" ]]; then
+                        XFILTER_DNS_2=""
                     fi
                 # Since the settings will not work, stay in the loop
                 DNSSettingsCorrect=False
                 # Otherwise,
                 else
                     # Show the settings
-                    if (whiptail --backtitle "Specify Upstream DNS Provider(s)" --title "Upstream DNS Provider(s)" --yesno "Are these settings correct?\\n    DNS Server 1:   $PIHOLE_DNS_1\\n    DNS Server 2:   ${PIHOLE_DNS_2}" ${r} ${c}); then
+                    if (whiptail --backtitle "Specify Upstream DNS Provider(s)" --title "Upstream DNS Provider(s)" --yesno "Are these settings correct?\\n    DNS Server 1:   $XFILTER_DNS_1\\n    DNS Server 2:   ${XFILTER_DNS_2}" ${r} ${c}); then
                     # and break from the loop since the servers are valid
                     DNSSettingsCorrect=True
                     # Otherwise,
@@ -1138,7 +1138,7 @@ chooseBlocklists() {
         mv "${adlistFile}" "${adlistFile}.old"
     fi
     # Let user select (or not) blocklists via a checklist
-    cmd=(whiptail --separate-output --checklist "Pi-hole relies on third party lists in order to block ads.\\n\\nYou can use the suggestions below, and/or add your own after installation\\n\\nTo deselect any list, use the arrow keys and spacebar" "${r}" "${c}" 7)
+    cmd=(whiptail --separate-output --checklist "X-filter relies on third party lists in order to block ads.\\n\\nYou can use the suggestions below, and/or add your own after installation\\n\\nTo deselect any list, use the arrow keys and spacebar" "${r}" "${c}" 7)
     # In an array, show the options available (all off by default):
     options=(StevenBlack "StevenBlack's Unified Hosts List" on
         MalwareDom "MalwareDomains" on
@@ -1189,22 +1189,22 @@ installDefaultBlocklists() {
     appendToListsFile HostsFile
 }
 
-# Check if /etc/dnsmasq.conf is from pi-hole.  If so replace with an original and install new in .d directory
+# Check if /etc/dnsmasq.conf is from x-filter.  If so replace with an original and install new in .d directory
 version_check_dnsmasq() {
     # Local, named variables
     local dnsmasq_conf="/etc/dnsmasq.conf"
     local dnsmasq_conf_orig="/etc/dnsmasq.conf.orig"
-    local dnsmasq_pihole_id_string="addn-hosts=/etc/pihole/gravity.list"
-    local dnsmasq_original_config="${PI_HOLE_LOCAL_REPO}/advanced/dnsmasq.conf.original"
-    local dnsmasq_pihole_01_snippet="${PI_HOLE_LOCAL_REPO}/advanced/01-pihole.conf"
-    local dnsmasq_pihole_01_location="/etc/dnsmasq.d/01-pihole.conf"
+    local dnsmasq_xfilter_id_string="addn-hosts=/etc/xfilter/gravity.list"
+    local dnsmasq_original_config="${X_FILTER_LOCAL_REPO}/advanced/dnsmasq.conf.original"
+    local dnsmasq_xfilter_01_snippet="${X_FILTER_LOCAL_REPO}/advanced/01-xfilter.conf"
+    local dnsmasq_xfilter_01_location="/etc/dnsmasq.d/01-xfilter.conf"
 
     # If the dnsmasq config file exists
     if [[ -f "${dnsmasq_conf}" ]]; then
         printf "  %b Existing dnsmasq.conf found..." "${INFO}"
-        # If gravity.list is found within this file, we presume it's from older versions on Pi-hole,
-        if grep -q ${dnsmasq_pihole_id_string} ${dnsmasq_conf}; then
-            printf " it is from a previous Pi-hole install.\\n"
+        # If gravity.list is found within this file, we presume it's from older versions on X-filter,
+        if grep -q ${dnsmasq_xfilter_id_string} ${dnsmasq_conf}; then
+            printf " it is from a previous X-filter install.\\n"
             printf "  %b Backing up dnsmasq.conf to dnsmasq.conf.orig..." "${INFO}"
             # so backup the original file
             mv -f ${dnsmasq_conf} ${dnsmasq_conf_orig}
@@ -1216,7 +1216,7 @@ version_check_dnsmasq() {
         # Otherwise,
         else
         # Don't to anything
-        printf " it is not a Pi-hole file, leaving alone!\\n"
+        printf " it is not a X-filter file, leaving alone!\\n"
         fi
     else
         # If a file cannot be found,
@@ -1226,30 +1226,30 @@ version_check_dnsmasq() {
         printf "%b  %b No dnsmasq.conf found... restoring default dnsmasq.conf...\\n" "${OVER}"  "${TICK}"
     fi
 
-    printf "  %b Copying 01-pihole.conf to /etc/dnsmasq.d/01-pihole.conf..." "${INFO}"
+    printf "  %b Copying 01-xfilter.conf to /etc/dnsmasq.d/01-xfilter.conf..." "${INFO}"
     # Check to see if dnsmasq directory exists (it may not due to being a fresh install and dnsmasq no longer being a dependency)
     if [[ ! -d "/etc/dnsmasq.d"  ]];then
         mkdir "/etc/dnsmasq.d"
     fi
-    # Copy the new Pi-hole DNS config file into the dnsmasq.d directory
-    cp ${dnsmasq_pihole_01_snippet} ${dnsmasq_pihole_01_location}
-    printf "%b  %b Copying 01-pihole.conf to /etc/dnsmasq.d/01-pihole.conf\\n" "${OVER}"  "${TICK}"
+    # Copy the new X-filter DNS config file into the dnsmasq.d directory
+    cp ${dnsmasq_xfilter_01_snippet} ${dnsmasq_xfilter_01_location}
+    printf "%b  %b Copying 01-xfilter.conf to /etc/dnsmasq.d/01-xfilter.conf\\n" "${OVER}"  "${TICK}"
     # Replace our placeholder values with the GLOBAL DNS variables that we populated earlier
     # First, swap in the interface to listen on
-    sed -i "s/@INT@/$PIHOLE_INTERFACE/" ${dnsmasq_pihole_01_location}
-    if [[ "${PIHOLE_DNS_1}" != "" ]]; then
+    sed -i "s/@INT@/$XFILTER_INTERFACE/" ${dnsmasq_xfilter_01_location}
+    if [[ "${XFILTER_DNS_1}" != "" ]]; then
         # Then swap in the primary DNS server
-        sed -i "s/@DNS1@/$PIHOLE_DNS_1/" ${dnsmasq_pihole_01_location}
+        sed -i "s/@DNS1@/$XFILTER_DNS_1/" ${dnsmasq_xfilter_01_location}
     else
         #
-        sed -i '/^server=@DNS1@/d' ${dnsmasq_pihole_01_location}
+        sed -i '/^server=@DNS1@/d' ${dnsmasq_xfilter_01_location}
     fi
-    if [[ "${PIHOLE_DNS_2}" != "" ]]; then
+    if [[ "${XFILTER_DNS_2}" != "" ]]; then
         # Then swap in the primary DNS server
-        sed -i "s/@DNS2@/$PIHOLE_DNS_2/" ${dnsmasq_pihole_01_location}
+        sed -i "s/@DNS2@/$XFILTER_DNS_2/" ${dnsmasq_xfilter_01_location}
     else
         #
-        sed -i '/^server=@DNS2@/d' ${dnsmasq_pihole_01_location}
+        sed -i '/^server=@DNS2@/d' ${dnsmasq_xfilter_01_location}
     fi
 
     #
@@ -1258,11 +1258,11 @@ version_check_dnsmasq() {
     # If the user does not want to enable logging,
     if [[ "${QUERY_LOGGING}" == false ]] ; then
         # Disable it by commenting out the directive in the DNS config file
-        sed -i 's/^log-queries/#log-queries/' ${dnsmasq_pihole_01_location}
+        sed -i 's/^log-queries/#log-queries/' ${dnsmasq_xfilter_01_location}
     # Otherwise,
     else
         # enable it by uncommenting the directive in the DNS config file
-        sed -i 's/^#log-queries/log-queries/' ${dnsmasq_pihole_01_location}
+        sed -i 's/^#log-queries/log-queries/' ${dnsmasq_xfilter_01_location}
     fi
 }
 
@@ -1286,56 +1286,56 @@ clean_existing() {
 # Install the scripts from repository to their various locations
 installScripts() {
     # Local, named variables
-    local str="Installing scripts from ${PI_HOLE_LOCAL_REPO}"
+    local str="Installing scripts from ${X_FILTER_LOCAL_REPO}"
     printf "  %b %s..." "${INFO}" "${str}"
 
-    # Clear out script files from Pi-hole scripts directory.
-    clean_existing "${PI_HOLE_INSTALL_DIR}" "${PI_HOLE_FILES[@]}"
+    # Clear out script files from X-filter scripts directory.
+    clean_existing "${X_FILTER_INSTALL_DIR}" "${X_FILTER_FILES[@]}"
 
     # Install files from local core repository
-    if is_repo "${PI_HOLE_LOCAL_REPO}"; then
+    if is_repo "${X_FILTER_LOCAL_REPO}"; then
         # move into the directory
-        cd "${PI_HOLE_LOCAL_REPO}"
+        cd "${X_FILTER_LOCAL_REPO}"
         # Install the scripts by:
         #  -o setting the owner to the user
         #  -Dm755 create all leading components of destination except the last, then copy the source to the destination and setting the permissions to 755
         #
         # This first one is the directory
-        install -o "${USER}" -Dm755 -d "${PI_HOLE_INSTALL_DIR}"
-        # The rest are the scripts Pi-hole needs
-        install -o "${USER}" -Dm755 -t "${PI_HOLE_INSTALL_DIR}" gravity.sh
-        install -o "${USER}" -Dm755 -t "${PI_HOLE_INSTALL_DIR}" ./advanced/Scripts/*.sh
-        install -o "${USER}" -Dm755 -t "${PI_HOLE_INSTALL_DIR}" ./automated\ install/uninstall.sh
-        install -o "${USER}" -Dm755 -t "${PI_HOLE_INSTALL_DIR}" ./advanced/Scripts/COL_TABLE
-        install -o "${USER}" -Dm755 -t /usr/local/bin/ pihole
-        install -Dm644 ./advanced/bash-completion/pihole /etc/bash_completion.d/pihole
+        install -o "${USER}" -Dm755 -d "${X_FILTER_INSTALL_DIR}"
+        # The rest are the scripts X-filter needs
+        install -o "${USER}" -Dm755 -t "${X_FILTER_INSTALL_DIR}" gravity.sh
+        install -o "${USER}" -Dm755 -t "${X_FILTER_INSTALL_DIR}" ./advanced/Scripts/*.sh
+        install -o "${USER}" -Dm755 -t "${X_FILTER_INSTALL_DIR}" ./automated\ install/uninstall.sh
+        install -o "${USER}" -Dm755 -t "${X_FILTER_INSTALL_DIR}" ./advanced/Scripts/COL_TABLE
+        install -o "${USER}" -Dm755 -t /usr/local/bin/ xfilter
+        install -Dm644 ./advanced/bash-completion/xfilter /etc/bash_completion.d/xfilter
         printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
 
     # Otherwise,
     else
         # Show an error and exit
         printf "%b  %b %s\\n" "${OVER}"  "${CROSS}" "${str}"
-        printf "\\t\\t%bError: Local repo %s not found, exiting installer%b\\n" "${COL_LIGHT_RED}" "${PI_HOLE_LOCAL_REPO}" "${COL_NC}"
+        printf "\\t\\t%bError: Local repo %s not found, exiting installer%b\\n" "${COL_LIGHT_RED}" "${X_FILTER_LOCAL_REPO}" "${COL_NC}"
         return 1
     fi
 }
 
-# Install the configs from PI_HOLE_LOCAL_REPO to their various locations
+# Install the configs from X_FILTER_LOCAL_REPO to their various locations
 installConfigs() {
-    printf "\\n  %b Installing configs from %s...\\n" "${INFO}" "${PI_HOLE_LOCAL_REPO}"
-    # Make sure Pi-hole's config files are in place
+    printf "\\n  %b Installing configs from %s...\\n" "${INFO}" "${X_FILTER_LOCAL_REPO}"
+    # Make sure X-filter's config files are in place
     version_check_dnsmasq
     # Install empty file if it does not exist
-    if [[ ! -f "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf" ]]; then
-        if ! install -o pihole -g pihole -m 664 /dev/null "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf" &>/dev/null; then
-            printf "  %bError: Unable to initialize configuration file %s/pihole-FTL.conf\\n" "${COL_LIGHT_RED}" "${PI_HOLE_CONFIG_DIR}"
+    if [[ ! -f "${X_FILTER_CONFIG_DIR}/xfilter-FTL.conf" ]]; then
+        if ! install -o xfilter -g xfilter -m 664 /dev/null "${X_FILTER_CONFIG_DIR}/xfilter-FTL.conf" &>/dev/null; then
+            printf "  %bError: Unable to initialize configuration file %s/xfilter-FTL.conf\\n" "${COL_LIGHT_RED}" "${X_FILTER_CONFIG_DIR}"
             return 1
         fi
     fi
     # Install an empty regex file
     if [[ ! -f "${regexFile}" ]]; then
         # Let PHP edit the regex file, if installed
-        install -o pihole -g "${LIGHTTPD_GROUP:-pihole}" -m 664 /dev/null "${regexFile}"
+        install -o xfilter -g "${LIGHTTPD_GROUP:-xfilter}" -m 664 /dev/null "${regexFile}"
     fi
     # If the user chose to install the dashboard,
     if [[ "${INSTALL_WEB_SERVER}" == true ]]; then
@@ -1350,13 +1350,13 @@ installConfigs() {
             # back up the original
             mv /etc/lighttpd/lighttpd.conf /etc/lighttpd/lighttpd.conf.orig
         fi
-        # and copy in the config file Pi-hole needs
-        cp ${PI_HOLE_LOCAL_REPO}/advanced/${LIGHTTPD_CFG} /etc/lighttpd/lighttpd.conf
+        # and copy in the config file X-filter needs
+        cp ${X_FILTER_LOCAL_REPO}/advanced/${LIGHTTPD_CFG} /etc/lighttpd/lighttpd.conf
         # Make sure the external.conf file exists, as lighttpd v1.4.50 crashes without it
         touch /etc/lighttpd/external.conf
-        # if there is a custom block page in the html/pihole directory, replace 404 handler in lighttpd config
-        if [[ -f "/var/www/html/pihole/custom.php" ]]; then
-            sed -i 's/^\(server\.error-handler-404\s*=\s*\).*$/\1"pihole\/custom\.php"/' /etc/lighttpd/lighttpd.conf
+        # if there is a custom block page in the html/xfilter directory, replace 404 handler in lighttpd config
+        if [[ -f "/var/www/html/xfilter/custom.php" ]]; then
+            sed -i 's/^\(server\.error-handler-404\s*=\s*\).*$/\1"xfilter\/custom\.php"/' /etc/lighttpd/lighttpd.conf
         fi
         # Make the directories if they do not exist and set the owners
         mkdir -p /var/run/lighttpd
@@ -1369,7 +1369,7 @@ installConfigs() {
 }
 
 install_manpage() {
-    # Copy Pi-hole man pages and call mandb to update man page database
+    # Copy X-filter man pages and call mandb to update man page database
     # Default location for man files for /usr/local/bin is /usr/local/share/man
     # on lightweight systems may not be present, so check before copying.
     printf "  %b Testing man page installation" "${INFO}"
@@ -1378,7 +1378,7 @@ install_manpage() {
         printf "%b  %b man not installed\\n" "${OVER}" "${INFO}"
         return
     elif [[ ! -d "/usr/local/share/man" ]]; then
-        # appropriate directory for Pi-hole's man page is not present
+        # appropriate directory for X-filter's man page is not present
         printf "%b  %b man pages not installed\\n" "${OVER}" "${INFO}"
         return
     fi
@@ -1391,9 +1391,9 @@ install_manpage() {
         mkdir /usr/local/share/man/man5
     fi
     # Testing complete, copy the files & update the man db
-    cp ${PI_HOLE_LOCAL_REPO}/manpages/pihole.8 /usr/local/share/man/man8/pihole.8
-    cp ${PI_HOLE_LOCAL_REPO}/manpages/pihole-FTL.8 /usr/local/share/man/man8/pihole-FTL.8
-    cp ${PI_HOLE_LOCAL_REPO}/manpages/pihole-FTL.conf.5 /usr/local/share/man/man5/pihole-FTL.conf.5
+    cp ${X_FILTER_LOCAL_REPO}/manpages/xfilter.8 /usr/local/share/man/man8/xfilter.8
+    cp ${X_FILTER_LOCAL_REPO}/manpages/xfilter-FTL.8 /usr/local/share/man/man8/xfilter-FTL.8
+    cp ${X_FILTER_LOCAL_REPO}/manpages/xfilter-FTL.conf.5 /usr/local/share/man/man5/xfilter-FTL.conf.5
     if mandb -q &>/dev/null; then
         # Updated successfully
         printf "%b  %b man pages installed and database updated\\n" "${OVER}" "${TICK}"
@@ -1401,7 +1401,7 @@ install_manpage() {
     else
         # Something is wrong with the system's man installation, clean up
         # our files, (leave everything how we found it).
-        rm /usr/local/share/man/man8/pihole.8 /usr/local/share/man/man8/pihole-FTL.8 /usr/local/share/man/man5/pihole-FTL.conf.5
+        rm /usr/local/share/man/man8/xfilter.8 /usr/local/share/man/man8/xfilter-FTL.8 /usr/local/share/man/man5/xfilter-FTL.conf.5
         printf "%b  %b man page db not updated, man pages not installed\\n" "${OVER}" "${CROSS}"
     fi
 }
@@ -1542,7 +1542,7 @@ notify_package_updates_available() {
             printf "%b  %b %s... up to date!\\n\\n" "${OVER}" "${TICK}" "${str}"
         else
             printf "%b  %b %s... %s updates available\\n" "${OVER}" "${TICK}" "${str}" "${updatesToInstall}"
-            printf "  %b %bIt is recommended to update your OS after installing the Pi-hole!%b\\n\\n" "${INFO}" "${COL_LIGHT_GREEN}" "${COL_NC}"
+            printf "  %b %bIt is recommended to update your OS after installing the X-filter!%b\\n\\n" "${INFO}" "${COL_LIGHT_GREEN}" "${COL_NC}"
         fi
     else
         printf "%b  %b %s\\n" "${OVER}" "${CROSS}" "${str}"
@@ -1615,19 +1615,19 @@ install_dependent_packages() {
 }
 
 # Install the Web interface dashboard
-installPiholeWeb() {
+installXfilterWeb() {
     printf "\\n  %b Installing blocking page...\\n" "${INFO}"
 
     local str="Creating directory for blocking page, and copying files"
     printf "  %b %s..." "${INFO}" "${str}"
     # Install the directory
-    install -d /var/www/html/pihole
+    install -d /var/www/html/xfilter
     # and the blockpage
-    install -D ${PI_HOLE_LOCAL_REPO}/advanced/{index,blockingpage}.* /var/www/html/pihole/
+    install -D ${X_FILTER_LOCAL_REPO}/advanced/{index,blockingpage}.* /var/www/html/xfilter/
 
     # Remove superseded file
-    if [[ -e "/var/www/html/pihole/index.js" ]]; then
-        rm "/var/www/html/pihole/index.js"
+    if [[ -e "/var/www/html/xfilter/index.js" ]]; then
+        rm "/var/www/html/xfilter/index.js"
     fi
 
     printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
@@ -1651,19 +1651,19 @@ installPiholeWeb() {
     printf "\\n  %b %s..." "${INFO}" "${str}"
     # Make the .d directory if it doesn't exist
     mkdir -p /etc/sudoers.d/
-    # and copy in the pihole sudoers file
-    cp ${PI_HOLE_LOCAL_REPO}/advanced/Templates/pihole.sudo /etc/sudoers.d/pihole
+    # and copy in the xfilter sudoers file
+    cp ${X_FILTER_LOCAL_REPO}/advanced/Templates/xfilter.sudo /etc/sudoers.d/xfilter
     # Add lighttpd user (OS dependent) to sudoers file
-    echo "${LIGHTTPD_USER} ALL=NOPASSWD: /usr/local/bin/pihole" >> /etc/sudoers.d/pihole
+    echo "${LIGHTTPD_USER} ALL=NOPASSWD: /usr/local/bin/xfilter" >> /etc/sudoers.d/xfilter
 
     # If the Web server user is lighttpd,
     if [[ "$LIGHTTPD_USER" == "lighttpd" ]]; then
-        # Allow executing pihole via sudo with Fedora
+        # Allow executing xfilter via sudo with Fedora
         # Usually /usr/local/bin is not permitted as directory for sudoable programs
-        echo "Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin" >> /etc/sudoers.d/pihole
+        echo "Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin" >> /etc/sudoers.d/xfilter
     fi
     # Set the strict permissions on the file
-    chmod 0440 /etc/sudoers.d/pihole
+    chmod 0440 /etc/sudoers.d/xfilter
     printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
 }
 
@@ -1673,36 +1673,36 @@ installCron() {
     local str="Installing latest Cron script"
     printf "\\n  %b %s..." "${INFO}" "${str}"
     # Copy the cron file over from the local repo
-    cp ${PI_HOLE_LOCAL_REPO}/advanced/Templates/pihole.cron /etc/cron.d/pihole
+    cp ${X_FILTER_LOCAL_REPO}/advanced/Templates/xfilter.cron /etc/cron.d/xfilter
     # Randomize gravity update time
-    sed -i "s/59 1 /$((1 + RANDOM % 58)) $((3 + RANDOM % 2))/" /etc/cron.d/pihole
+    sed -i "s/59 1 /$((1 + RANDOM % 58)) $((3 + RANDOM % 2))/" /etc/cron.d/xfilter
     # Randomize update checker time
-    sed -i "s/59 17/$((1 + RANDOM % 58)) $((12 + RANDOM % 8))/" /etc/cron.d/pihole
+    sed -i "s/59 17/$((1 + RANDOM % 58)) $((12 + RANDOM % 8))/" /etc/cron.d/xfilter
     printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
 }
 
 # Gravity is a very important script as it aggregates all of the domains into a single HOSTS formatted list,
-# which is what Pi-hole needs to begin blocking ads
+# which is what X-filter needs to begin blocking ads
 runGravity() {
     # Run gravity in the current shell
-    { /opt/pihole/gravity.sh --force; }
+    { /opt/xfilter/gravity.sh --force; }
 }
 
-# Check if the pihole user exists and create if it does not
-create_pihole_user() {
-    local str="Checking for user 'pihole'"
+# Check if the xfilter user exists and create if it does not
+create_xfilter_user() {
+    local str="Checking for user 'xfilter'"
     printf "  %b %s..." "${INFO}" "${str}"
-    # If the user pihole exists,
-    if id -u pihole &> /dev/null; then
+    # If the user xfilter exists,
+    if id -u xfilter &> /dev/null; then
         # just show a success
         printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
     # Otherwise,
     else
         printf "%b  %b %s" "${OVER}" "${CROSS}" "${str}"
-        local str="Creating user 'pihole'"
+        local str="Creating user 'xfilter'"
         printf "%b  %b %s..." "${OVER}" "${INFO}" "${str}"
         # create her with the useradd command
-        if useradd -r -s /usr/sbin/nologin pihole; then
+        if useradd -r -s /usr/sbin/nologin xfilter; then
           printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
         else
           printf "%b  %b %s\\n" "${OVER}" "${CROSS}" "${str}"
@@ -1715,10 +1715,10 @@ configureFirewall() {
     printf "\\n"
     # If a firewall is running,
     if firewall-cmd --state &> /dev/null; then
-        # ask if the user wants to install Pi-hole's default firewall rules
-        whiptail --title "Firewall in use" --yesno "We have detected a running firewall\\n\\nPi-hole currently requires HTTP and DNS port access.\\n\\n\\n\\nInstall Pi-hole default firewall rules?" ${r} ${c} || \
+        # ask if the user wants to install X-filter's default firewall rules
+        whiptail --title "Firewall in use" --yesno "We have detected a running firewall\\n\\nX-filter currently requires HTTP and DNS port access.\\n\\n\\n\\nInstall X-filter default firewall rules?" ${r} ${c} || \
         { printf "  %b Not installing firewall rulesets.\\n" "${INFO}"; return 0; }
-        printf "  %b Configuring FirewallD for httpd and pihole-FTL\\n" "${TICK}"
+        printf "  %b Configuring FirewallD for httpd and xfilter-FTL\\n" "${TICK}"
         # Allow HTTP and DNS traffic
         firewall-cmd --permanent --add-service=http --add-service=dns
         # Reload the firewall to apply these changes
@@ -1729,7 +1729,7 @@ configureFirewall() {
     # If chain Policy is not ACCEPT or last Rule is not ACCEPT
     # then check and insert our Rules above the DROP/REJECT Rule.
         if iptables -S INPUT | head -n1 | grep -qv '^-P.*ACCEPT$' || iptables -S INPUT | tail -n1 | grep -qv '^-\(A\|P\).*ACCEPT$'; then
-            whiptail --title "Firewall in use" --yesno "We have detected a running firewall\\n\\nPi-hole currently requires HTTP and DNS port access.\\n\\n\\n\\nInstall Pi-hole default firewall rules?" ${r} ${c} || \
+            whiptail --title "Firewall in use" --yesno "We have detected a running firewall\\n\\nX-filter currently requires HTTP and DNS port access.\\n\\n\\n\\nInstall X-filter default firewall rules?" ${r} ${c} || \
             { printf "  %b Not installing firewall rulesets.\\n" "${INFO}"; return 0; }
             printf "  %b Installing new IPTables firewall rulesets\\n" "${TICK}"
             # Check chain first, otherwise a new rule will duplicate old ones
@@ -1767,15 +1767,15 @@ finalExports() {
     # If the setup variable file exists,
     if [[ -e "${setupVars}" ]]; then
         # update the variables in the file
-        sed -i.update.bak '/PIHOLE_INTERFACE/d;/IPV4_ADDRESS/d;/IPV6_ADDRESS/d;/PIHOLE_DNS_1/d;/PIHOLE_DNS_2/d;/QUERY_LOGGING/d;/INSTALL_WEB_SERVER/d;/INSTALL_WEB_INTERFACE/d;/LIGHTTPD_ENABLED/d;' "${setupVars}"
+        sed -i.update.bak '/XFILTER_INTERFACE/d;/IPV4_ADDRESS/d;/IPV6_ADDRESS/d;/XFILTER_DNS_1/d;/XFILTER_DNS_2/d;/QUERY_LOGGING/d;/INSTALL_WEB_SERVER/d;/INSTALL_WEB_INTERFACE/d;/LIGHTTPD_ENABLED/d;' "${setupVars}"
     fi
     # echo the information to the user
     {
-    echo "PIHOLE_INTERFACE=${PIHOLE_INTERFACE}"
+    echo "XFILTER_INTERFACE=${XFILTER_INTERFACE}"
     echo "IPV4_ADDRESS=${IPV4_ADDRESS}"
     echo "IPV6_ADDRESS=${IPV6_ADDRESS}"
-    echo "PIHOLE_DNS_1=${PIHOLE_DNS_1}"
-    echo "PIHOLE_DNS_2=${PIHOLE_DNS_2}"
+    echo "XFILTER_DNS_1=${XFILTER_DNS_1}"
+    echo "XFILTER_DNS_2=${XFILTER_DNS_2}"
     echo "QUERY_LOGGING=${QUERY_LOGGING}"
     echo "INSTALL_WEB_SERVER=${INSTALL_WEB_SERVER}"
     echo "INSTALL_WEB_INTERFACE=${INSTALL_WEB_INTERFACE}"
@@ -1783,12 +1783,12 @@ finalExports() {
     }>> "${setupVars}"
 
     # Set the privacy level
-    sed -i '/PRIVACYLEVEL/d' "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf"
-    echo "PRIVACYLEVEL=${PRIVACY_LEVEL}" >> "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf"
+    sed -i '/PRIVACYLEVEL/d' "${X_FILTER_CONFIG_DIR}/xfilter-FTL.conf"
+    echo "PRIVACYLEVEL=${PRIVACY_LEVEL}" >> "${X_FILTER_CONFIG_DIR}/xfilter-FTL.conf"
 
     # Bring in the current settings and the functions to manipulate them
     source "${setupVars}"
-    source "${PI_HOLE_LOCAL_REPO}/advanced/Scripts/webpage.sh"
+    source "${X_FILTER_LOCAL_REPO}/advanced/Scripts/webpage.sh"
 
     # Look for DNS server settings which would have to be reapplied
     ProcessDNSSettings
@@ -1803,7 +1803,7 @@ installLogrotate() {
     local str="Installing latest logrotate script"
     printf "\\n  %b %s..." "${INFO}" "${str}"
     # Copy the file over from the local repo
-    cp ${PI_HOLE_LOCAL_REPO}/advanced/Templates/logrotate /etc/pihole/logrotate
+    cp ${X_FILTER_LOCAL_REPO}/advanced/Templates/logrotate /etc/xfilter/logrotate
     # Different operating systems have different user / group
     # settings for logrotate that makes it impossible to create
     # a static logrotate file that will work with e.g.
@@ -1814,7 +1814,7 @@ installLogrotate() {
     # If the variable has a value,
     if [[ ! -z "${logusergroup}" ]]; then
         #
-        sed -i "s/# su #/su ${logusergroup}/g;" /etc/pihole/logrotate
+        sed -i "s/# su #/su ${logusergroup}/g;" /etc/xfilter/logrotate
     fi
     printf "%b  %b %s\\n" "${OVER}" "${TICK}" "${str}"
 }
@@ -1822,15 +1822,15 @@ installLogrotate() {
 # At some point in the future this list can be pruned, for now we'll need it to ensure updates don't break.
 # Refactoring of install script has changed the name of a couple of variables. Sort them out here.
 accountForRefactor() {
-    sed -i 's/piholeInterface/PIHOLE_INTERFACE/g' ${setupVars}
+    sed -i 's/xfilterInterface/XFILTER_INTERFACE/g' ${setupVars}
     sed -i 's/IPv4_address/IPV4_ADDRESS/g' ${setupVars}
     sed -i 's/IPv4addr/IPV4_ADDRESS/g' ${setupVars}
     sed -i 's/IPv6_address/IPV6_ADDRESS/g' ${setupVars}
-    sed -i 's/piholeIPv6/IPV6_ADDRESS/g' ${setupVars}
-    sed -i 's/piholeDNS1/PIHOLE_DNS_1/g' ${setupVars}
-    sed -i 's/piholeDNS2/PIHOLE_DNS_2/g' ${setupVars}
+    sed -i 's/xfilterIPv6/IPV6_ADDRESS/g' ${setupVars}
+    sed -i 's/xfilterDNS1/XFILTER_DNS_1/g' ${setupVars}
+    sed -i 's/xfilterDNS2/XFILTER_DNS_2/g' ${setupVars}
     sed -i 's/^INSTALL_WEB=/INSTALL_WEB_INTERFACE=/' ${setupVars}
-    # Add 'INSTALL_WEB_SERVER', if its not been applied already: https://github.com/pi-hole/pi-hole/pull/2115
+    # Add 'INSTALL_WEB_SERVER', if its not been applied already: https://github.com/markCTX/x-filter/pull/2115
     if ! grep -q '^INSTALL_WEB_SERVER=' ${setupVars}; then
         local webserver_installed=false
         if grep -q '^INSTALL_WEB_INTERFACE=true' ${setupVars}; then
@@ -1841,9 +1841,9 @@ accountForRefactor() {
 }
 
 # Install base files and web interface
-installPihole() {
-    # Create the pihole user
-    create_pihole_user
+installXfilter() {
+    # Create the xfilter user
+    create_xfilter_user
 
     # If the user wants to install the Web interface,
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
@@ -1856,8 +1856,8 @@ installPihole() {
             # Set the owner and permissions
             chown ${LIGHTTPD_USER}:${LIGHTTPD_GROUP} /var/www/html
             chmod 775 /var/www/html
-            # Give pihole access to the Web server group
-            usermod -a -G ${LIGHTTPD_GROUP} pihole
+            # Give xfilter access to the Web server group
+            usermod -a -G ${LIGHTTPD_GROUP} xfilter
             # If the lighttpd command is executable,
             if is_command lighty-enable-mod ; then
                 # enable fastcgi and fastcgi-php
@@ -1886,7 +1886,7 @@ installPihole() {
     # If the user wants to install the dashboard,
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
         # do so
-        installPiholeWeb
+        installXfilterWeb
     fi
     # Install the cron file
     installCron
@@ -1899,7 +1899,7 @@ installPihole() {
         configureFirewall
     fi
 
-    # install a man page entry for pihole
+    # install a man page entry for xfilter
     install_manpage
 
     # Update setupvars.conf with any variables that may or may not have been changed during the install
@@ -1916,8 +1916,8 @@ checkSelinux() {
 
         # If it's enforcing,
         if [[ "${enforceMode}" == "Enforcing" ]]; then
-            # Explain Pi-hole does not support it yet
-            whiptail --defaultno --title "SELinux Enforcing Detected" --yesno "SELinux is being ENFORCED on your system! \\n\\nPi-hole currently does not support SELinux, but you may still continue with the installation.\\n\\nNote: Web Admin will not be fully functional unless you set your policies correctly\\n\\nContinue installing Pi-hole?" ${r} ${c} || \
+            # Explain X-filter does not support it yet
+            whiptail --defaultno --title "SELinux Enforcing Detected" --yesno "SELinux is being ENFORCED on your system! \\n\\nX-filter currently does not support SELinux, but you may still continue with the installation.\\n\\nNote: Web Admin will not be fully functional unless you set your policies correctly\\n\\nContinue installing X-filter?" ${r} ${c} || \
             { printf "\\n  %bSELinux Enforcing detected, exiting installer%b\\n" "${COL_LIGHT_RED}" "${COL_NC}"; exit 1; }
             printf "  %b Continuing installation with SELinux Enforcing\\n" "${INFO}"
             printf "      %b Please refer to official SELinux documentation to create a custom policy\\n" "${INFO}"
@@ -1931,7 +1931,7 @@ displayFinalMessage() {
     if [[ "${#1}" -gt 0 ]] ; then
         pwstring="$1"
         # else, if the dashboard password in the setup variables exists,
-    elif [[ $(grep 'WEBPASSWORD' -c /etc/pihole/setupVars.conf) -gt 0 ]]; then
+    elif [[ $(grep 'WEBPASSWORD' -c /etc/xfilter/setupVars.conf) -gt 0 ]]; then
         # set a variable for evaluation later
         pwstring="unchanged"
     else
@@ -1941,26 +1941,26 @@ displayFinalMessage() {
     # If the user wants to install the dashboard,
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
         # Store a message in a variable and display it
-        additional="View the web interface at http://pi.hole/admin or http://${IPV4_ADDRESS%/*}/admin
+        additional="View the web interface at http://x.filter/admin or http://${IPV4_ADDRESS%/*}/admin
 
 Your Admin Webpage login password is ${pwstring}"
    fi
 
     # Final completion message to user
-    whiptail --msgbox --backtitle "Make it so." --title "Installation Complete!" "Configure your devices to use the Pi-hole as their DNS server using:
+    whiptail --msgbox --backtitle "Make it so." --title "Installation Complete!" "Configure your devices to use the X-filter as their DNS server using:
 
 IPv4:	${IPV4_ADDRESS%/*}
 IPv6:	${IPV6_ADDRESS:-"Not Configured"}
 
 If you set a new IP address, you should restart the Pi.
 
-The install log is in /etc/pihole.
+The install log is in /etc/xfilter.
 
 ${additional}" ${r} ${c}
 }
 
 update_dialogs() {
-    # If pihole -r "reconfigure" option was selected,
+    # If xfilter -r "reconfigure" option was selected,
     if [[ "${reconfigure}" = true ]]; then
         # set some variables that will be used
         opt1a="Repair"
@@ -1974,7 +1974,7 @@ update_dialogs() {
         strAdd="You will be updated to the latest version."
     fi
     opt2a="Reconfigure"
-    opt2b="This will reset your Pi-hole and allow you to enter new settings."
+    opt2b="This will reset your X-filter and allow you to enter new settings."
 
     # Display the information to the user
     UpdateCmd=$(whiptail --title "Existing Install Detected!" --menu "\\n\\nWe have detected an existing install.\\n\\nPlease choose from the following options: \\n($strAdd)" ${r} ${c} 2 \
@@ -1998,7 +1998,7 @@ update_dialogs() {
 }
 
 check_download_exists() {
-    status=$(curl --head --silent "https://ftl.pi-hole.net/${1}" | head -n 1)
+    status=$(curl --head --silent "https://ftl.x-filter.net/${1}" | head -n 1)
     if grep -q "404" <<< "$status"; then
         return 1
     else
@@ -2083,8 +2083,8 @@ clone_or_update_repos() {
     if [[ "${reconfigure}" == true ]]; then
         printf "  %b Performing reconfiguration, skipping download of local repos\\n" "${INFO}"
         # Reset the Core repo
-        resetRepo ${PI_HOLE_LOCAL_REPO} || \
-        { printf "  %bUnable to reset %s, exiting installer%b\\n" "${COL_LIGHT_RED}" "${PI_HOLE_LOCAL_REPO}" "${COL_NC}"; \
+        resetRepo ${X_FILTER_LOCAL_REPO} || \
+        { printf "  %bUnable to reset %s, exiting installer%b\\n" "${COL_LIGHT_RED}" "${X_FILTER_LOCAL_REPO}" "${COL_NC}"; \
         exit 1; \
         }
         # If the Web interface was installed,
@@ -2098,8 +2098,8 @@ clone_or_update_repos() {
     # Otherwise, a repair is happening
     else
         # so get git files for Core
-        getGitFiles ${PI_HOLE_LOCAL_REPO} ${piholeGitUrl} || \
-        { printf "  %bUnable to clone %s into %s, unable to continue%b\\n" "${COL_LIGHT_RED}" "${piholeGitUrl}" "${PI_HOLE_LOCAL_REPO}" "${COL_NC}"; \
+        getGitFiles ${X_FILTER_LOCAL_REPO} ${xfilterGitUrl} || \
+        { printf "  %bUnable to clone %s into %s, unable to continue%b\\n" "${COL_LIGHT_RED}" "${xfilterGitUrl}" "${X_FILTER_LOCAL_REPO}" "${COL_NC}"; \
         exit 1; \
         }
         # If the Web interface was installed,
@@ -2122,7 +2122,7 @@ FTLinstall() {
     printf "  %b %s..." "${INFO}" "${str}"
 
     # Find the latest version tag for FTL
-    latesttag=$(curl -sI https://github.com/pi-hole/FTL/releases/latest | grep "Location" | awk -F '/' '{print $NF}')
+    latesttag=$(curl -sI https://github.com/markCTX/FTL/releases/latest | grep "Location" | awk -F '/' '{print $NF}')
     # Tags should always start with v, check for that.
     if [[ ! "${latesttag}" == v* ]]; then
         printf "%b  %b %s\\n" "${OVER}" "${CROSS}" "${str}"
@@ -2133,23 +2133,23 @@ FTLinstall() {
     # Move into the temp ftl directory
     pushd "$(mktemp -d)" > /dev/null || { printf "Unable to make temporary directory for FTL binary download\\n"; return 1; }
 
-    # Always replace pihole-FTL.service
-    install -T -m 0755 "${PI_HOLE_LOCAL_REPO}/advanced/Templates/pihole-FTL.service" "/etc/init.d/pihole-FTL"
+    # Always replace xfilter-FTL.service
+    install -T -m 0755 "${X_FILTER_LOCAL_REPO}/advanced/Templates/xfilter-FTL.service" "/etc/init.d/xfilter-FTL"
 
     local ftlBranch
     local url
 
-    if [[ -f "/etc/pihole/ftlbranch" ]];then
-        ftlBranch=$(</etc/pihole/ftlbranch)
+    if [[ -f "/etc/xfilter/ftlbranch" ]];then
+        ftlBranch=$(</etc/xfilter/ftlbranch)
     else
         ftlBranch="master"
     fi
 
     # Determine which version of FTL to download
     if [[ "${ftlBranch}" == "master" ]];then
-        url="https://github.com/pi-hole/FTL/releases/download/${latesttag%$'\r'}"
+        url="https://github.com/markCTX/FTL/releases/download/${latesttag%$'\r'}"
     else
-        url="https://ftl.pi-hole.net/${ftlBranch}"
+        url="https://ftl.x-filter.net/${ftlBranch}"
     fi
 
     # If the download worked,
@@ -2161,9 +2161,9 @@ FTLinstall() {
         if sha1sum --status --quiet -c "${binary}".sha1; then
             printf "transferred... "
             # Stop FTL
-            stop_service pihole-FTL &> /dev/null
+            stop_service xfilter-FTL &> /dev/null
             # Install the new version with the correct permissions
-            install -T -m 0755 "${binary}" /usr/bin/pihole-FTL
+            install -T -m 0755 "${binary}" /usr/bin/xfilter-FTL
             # Move back into the original directory the user was in
             popd > /dev/null || { printf "Unable to return to original directory after FTL binary download.\\n"; return 1; }
             # Install the FTL service
@@ -2226,24 +2226,24 @@ get_binary_name() {
         if [[ "${lib}" == "/lib/ld-linux-aarch64.so.1" ]]; then
             printf "%b  %b Detected ARM-aarch64 architecture\\n" "${OVER}" "${TICK}"
             # set the binary to be used
-            binary="pihole-FTL-aarch64-linux-gnu"
+            binary="xfilter-FTL-aarch64-linux-gnu"
         #
         elif [[ "${lib}" == "/lib/ld-linux-armhf.so.3" ]]; then
             #
             if [[ "${rev}" -gt 6 ]]; then
                 printf "%b  %b Detected ARM-hf architecture (armv7+)\\n" "${OVER}" "${TICK}"
                 # set the binary to be used
-                binary="pihole-FTL-arm-linux-gnueabihf"
+                binary="xfilter-FTL-arm-linux-gnueabihf"
             # Otherwise,
             else
                 printf "%b  %b Detected ARM-hf architecture (armv6 or lower) Using ARM binary\\n" "${OVER}" "${TICK}"
                 # set the binary to be used
-                binary="pihole-FTL-arm-linux-gnueabi"
+                binary="xfilter-FTL-arm-linux-gnueabi"
             fi
         else
             printf "%b  %b Detected ARM architecture\\n" "${OVER}" "${TICK}"
             # set the binary to be used
-            binary="pihole-FTL-arm-linux-gnueabi"
+            binary="xfilter-FTL-arm-linux-gnueabi"
         fi
     elif [[ "${machine}" == "x86_64" ]]; then
         # This gives the architecture of packages dpkg installs (for example, "i386")
@@ -2254,40 +2254,40 @@ get_binary_name() {
         # -> change machine architecture to download the 32 bit executable
         if [[ "${dpkgarch}" == "i386" ]]; then
             printf "%b  %b Detected 32bit (i686) architecture\\n" "${OVER}" "${TICK}"
-            binary="pihole-FTL-linux-x86_32"
+            binary="xfilter-FTL-linux-x86_32"
         else
             # 64bit
             printf "%b  %b Detected x86_64 architecture\\n" "${OVER}" "${TICK}"
             # set the binary to be used
-            binary="pihole-FTL-linux-x86_64"
+            binary="xfilter-FTL-linux-x86_64"
         fi
     else
         # Something else - we try to use 32bit executable and warn the user
         if [[ ! "${machine}" == "i686" ]]; then
             printf "%b  %b %s...\\n" "${OVER}" "${CROSS}" "${str}"
             printf "  %b %bNot able to detect architecture (unknown: %s), trying 32bit executable%b\\n" "${INFO}" "${COL_LIGHT_RED}" "${machine}" "${COL_NC}"
-            printf "  %b Contact Pi-hole Support if you experience issues (e.g: FTL not running)\\n" "${INFO}"
+            printf "  %b Contact X-filter Support if you experience issues (e.g: FTL not running)\\n" "${INFO}"
         else
             printf "%b  %b Detected 32bit (i686) architecture\\n" "${OVER}" "${TICK}"
         fi
-        binary="pihole-FTL-linux-x86_32"
+        binary="xfilter-FTL-linux-x86_32"
     fi
 }
 
 FTLcheckUpdate() {
     get_binary_name
 
-    #In the next section we check to see if FTL is already installed (in case of pihole -r).
+    #In the next section we check to see if FTL is already installed (in case of xfilter -r).
     #If the installed version matches the latest version, then check the installed sha1sum of the binary vs the remote sha1sum. If they do not match, then download
     printf "  %b Checking for existing FTL binary...\\n" "${INFO}"
 
     local ftlLoc
-    ftlLoc=$(which pihole-FTL 2>/dev/null)
+    ftlLoc=$(which xfilter-FTL 2>/dev/null)
 
     local ftlBranch
 
-    if [[ -f "/etc/pihole/ftlbranch" ]];then
-        ftlBranch=$(</etc/pihole/ftlbranch)
+    if [[ -f "/etc/xfilter/ftlbranch" ]];then
+        ftlBranch=$(</etc/xfilter/ftlbranch)
     else
         ftlBranch="master"
     fi
@@ -2309,18 +2309,18 @@ FTLcheckUpdate() {
         # shellcheck disable=SC1090
         if ! check_download_exists "$path"; then
             printf "  %b Branch \"%s\" is not available.\\n" "${INFO}" "${ftlBranch}"
-            printf "  %b Use %bpihole checkout ftl [branchname]%b to switch to a valid branch.\\n" "${INFO}" "${COL_LIGHT_GREEN}" "${COL_NC}"
+            printf "  %b Use %bxfilter checkout ftl [branchname]%b to switch to a valid branch.\\n" "${INFO}" "${COL_LIGHT_GREEN}" "${COL_NC}"
             return 2
         fi
 
         if [[ ${ftlLoc} ]]; then
-            # We already have a pihole-FTL binary downloaded.
+            # We already have a xfilter-FTL binary downloaded.
             # Alt branches don't have a tagged version against them, so just confirm the checksum of the local vs remote to decide whether we download or not
-            remoteSha1=$(curl -sSL --fail "https://ftl.pi-hole.net/${ftlBranch}/${binary}.sha1" | cut -d ' ' -f 1)
-            localSha1=$(sha1sum "$(which pihole-FTL)" | cut -d ' ' -f 1)
+            remoteSha1=$(curl -sSL --fail "https://ftl.x-filter.net/${ftlBranch}/${binary}.sha1" | cut -d ' ' -f 1)
+            localSha1=$(sha1sum "$(which xfilter-FTL)" | cut -d ' ' -f 1)
 
             if [[ "${remoteSha1}" != "${localSha1}" ]]; then
-                printf "  %b Checksums do not match, downloading from ftl.pi-hole.net.\\n" "${INFO}"
+                printf "  %b Checksums do not match, downloading from ftl.x-filter.net.\\n" "${INFO}"
                 return 0
             else
                 printf "  %b Checksum of installed binary matches remote. No need to download!\\n" "${INFO}"
@@ -2332,17 +2332,17 @@ FTLcheckUpdate() {
     else
         if [[ ${ftlLoc} ]]; then
             local FTLversion
-            FTLversion=$(/usr/bin/pihole-FTL tag)
+            FTLversion=$(/usr/bin/xfilter-FTL tag)
             local FTLlatesttag
-            FTLlatesttag=$(curl -sI https://github.com/pi-hole/FTL/releases/latest | grep 'Location' | awk -F '/' '{print $NF}' | tr -d '\r\n')
+            FTLlatesttag=$(curl -sI https://github.com/markCTX/FTL/releases/latest | grep 'Location' | awk -F '/' '{print $NF}' | tr -d '\r\n')
 
             if [[ "${FTLversion}" != "${FTLlatesttag}" ]]; then
                 return 0
             else
                 printf "  %b Latest FTL Binary already installed (%s). Confirming Checksum...\\n" "${INFO}" "${FTLlatesttag}"
 
-                remoteSha1=$(curl -sSL --fail "https://github.com/pi-hole/FTL/releases/download/${FTLversion%$'\r'}/${binary}.sha1" | cut -d ' ' -f 1)
-                localSha1=$(sha1sum "$(which pihole-FTL)" | cut -d ' ' -f 1)
+                remoteSha1=$(curl -sSL --fail "https://github.com/markCTX/FTL/releases/download/${FTLversion%$'\r'}/${binary}.sha1" | cut -d ' ' -f 1)
+                localSha1=$(sha1sum "$(which xfilter-FTL)" | cut -d ' ' -f 1)
 
                 if [[ "${remoteSha1}" != "${localSha1}" ]]; then
                     printf "  %b Corruption detected...\\n" "${INFO}"
@@ -2369,7 +2369,7 @@ FTLdetect() {
 
 make_temporary_log() {
     # Create a random temporary file for the log
-    TEMPLOG=$(mktemp /tmp/pihole_temp.XXXXXX)
+    TEMPLOG=$(mktemp /tmp/xfilter_temp.XXXXXX)
     # Open handle 3 for templog
     # https://stackoverflow.com/questions/18460186/writing-outputs-to-log-file-and-console
     exec 3>"$TEMPLOG"
@@ -2395,7 +2395,7 @@ main() {
     if [[ "${EUID}" -eq 0 ]]; then
         # they are root and all is good
         printf "  %b %s\\n" "${TICK}" "${str}"
-        # Show the Pi-hole logo so people know it's genuine since the logo and name are trademarked
+        # Show the X-filter logo so people know it's genuine since the logo and name are trademarked
         show_ascii_berry
         make_temporary_log
     # Otherwise,
@@ -2403,7 +2403,7 @@ main() {
         # They do not have enough privileges, so let the user know
         printf "  %b %s\\n" "${CROSS}" "${str}"
         printf "  %b %bScript called with non-root privileges%b\\n" "${INFO}" "${COL_LIGHT_RED}" "${COL_NC}"
-        printf "      The Pi-hole requires elevated privileges to install and run\\n"
+        printf "      The X-filter requires elevated privileges to install and run\\n"
         printf "      Please check the installer for any concerns regarding this requirement\\n"
         printf "      Make sure to download this script from a trusted source\\n\\n"
         printf "  %b Sudo utility check" "${INFO}"
@@ -2412,13 +2412,13 @@ main() {
         if is_command sudo ; then
             printf "%b  %b Sudo utility check\\n" "${OVER}"  "${TICK}"
             # Download the install script and run it with admin rights
-            exec curl -sSL https://raw.githubusercontent.com/pi-hole/pi-hole/master/automated%20install/basic-install.sh | sudo bash "$@"
+            exec curl -sSL https://raw.githubusercontent.com/x-filter/x-filter/master/automated%20install/basic-install.sh | sudo bash "$@"
             exit $?
         # Otherwise,
         else
             # Let them know they need to run it as root
             printf "%b  %b Sudo utility check\\n" "${OVER}" "${CROSS}"
-            printf "  %b Sudo is needed for the Web Interface to run pihole commands\\n\\n" "${INFO}"
+            printf "  %b Sudo is needed for the Web Interface to run xfilter commands\\n\\n" "${INFO}"
             printf "  %b %bPlease re-run this installer as root${COL_NC}\\n" "${INFO}" "${COL_LIGHT_RED}"
             exit 1
         fi
@@ -2466,8 +2466,8 @@ main() {
     if [[ "${useUpdateVars}" == false ]]; then
         # Display welcome dialogs
         welcomeDialogs
-        # Create directory for Pi-hole storage
-        mkdir -p /etc/pihole/
+        # Create directory for X-filter storage
+        mkdir -p /etc/xfilter/
         # Determine available interfaces
         get_available_interfaces
         # Find interfaces and let the user choose one
@@ -2492,8 +2492,8 @@ main() {
         source ${setupVars}
 
         # Get the privacy level if it exists (default is 0)
-        if [[ -f "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf" ]]; then
-            PRIVACY_LEVEL=$(sed -ne 's/PRIVACYLEVEL=\(.*\)/\1/p' "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf")
+        if [[ -f "${X_FILTER_CONFIG_DIR}/xfilter-FTL.conf" ]]; then
+            PRIVACY_LEVEL=$(sed -ne 's/PRIVACYLEVEL=\(.*\)/\1/p' "${X_FILTER_CONFIG_DIR}/xfilter-FTL.conf")
 
             # If no setting was found, default to 0
             PRIVACY_LEVEL="${PRIVACY_LEVEL:-0}"
@@ -2503,10 +2503,10 @@ main() {
     clone_or_update_repos
 
     # Install the Core dependencies
-    local dep_install_list=("${PIHOLE_DEPS[@]}")
+    local dep_install_list=("${XFILTER_DEPS[@]}")
     if [[ "${INSTALL_WEB_SERVER}" == true ]]; then
         # Install the Web dependencies
-        dep_install_list+=("${PIHOLE_WEB_DEPS[@]}")
+        dep_install_list+=("${XFILTER_WEB_DEPS[@]}")
     fi
 
     install_dependent_packages dep_install_list[@]
@@ -2525,7 +2525,7 @@ main() {
     fi
 
     # Install and log everything to a file
-    installPihole | tee -a /proc/$$/fd/3
+    installXfilter | tee -a /proc/$$/fd/3
 
     # Copy the temp log file into final log location for storage
     copy_to_install_log
@@ -2534,11 +2534,11 @@ main() {
         # Add password to web UI if there is none
         pw=""
         # If no password is set,
-        if [[ $(grep 'WEBPASSWORD' -c /etc/pihole/setupVars.conf) == 0 ]] ; then
+        if [[ $(grep 'WEBPASSWORD' -c /etc/xfilter/setupVars.conf) == 0 ]] ; then
             # generate a random password
             pw=$(tr -dc _A-Z-a-z-0-9 < /dev/urandom | head -c 8)
             # shellcheck disable=SC1091
-            . /opt/pihole/webpage.sh
+            . /opt/xfilter/webpage.sh
             echo "WEBPASSWORD=$(HashPassword ${pw})" >> ${setupVars}
         fi
     fi
@@ -2567,15 +2567,15 @@ main() {
     # Ensure the service is enabled before trying to start it
     # Fixes a problem reported on Ubuntu 18.04 where trying to start
     # the service before enabling causes installer to exit
-    enable_service pihole-FTL
-    start_service pihole-FTL
+    enable_service xfilter-FTL
+    start_service xfilter-FTL
 
     # Download and compile the aggregated block list
     runGravity
 
     # Force an update of the updatechecker
-    /opt/pihole/updatecheck.sh
-    /opt/pihole/updatecheck.sh x remote
+    /opt/xfilter/updatecheck.sh
+    /opt/xfilter/updatecheck.sh x remote
 
     if [[ "${useUpdateVars}" == false ]]; then
         displayFinalMessage "${pw}"
@@ -2587,20 +2587,20 @@ main() {
         if (( ${#pw} > 0 )) ; then
             # display the password
             printf "  %b Web Interface password: %b%s%b\\n" "${INFO}" "${COL_LIGHT_GREEN}" "${pw}" "${COL_NC}"
-            printf "  %b This can be changed using 'pihole -a -p'\\n\\n" "${INFO}"
+            printf "  %b This can be changed using 'xfilter -a -p'\\n\\n" "${INFO}"
         fi
     fi
 
     if [[ "${useUpdateVars}" == false ]]; then
         # If the Web interface was installed,
         if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
-            printf "  %b View the web interface at http://pi.hole/admin or http://%s/admin\\n\\n" "${INFO}" "${IPV4_ADDRESS%/*}"
+            printf "  %b View the web interface at http://x.filter/admin or http://%s/admin\\n\\n" "${INFO}" "${IPV4_ADDRESS%/*}"
         fi
-        # Explain to the user how to use Pi-hole as their DNS server
-        printf "  %b You may now configure your devices to use the Pi-hole as their DNS server\\n" "${INFO}"
-        [[ -n "${IPV4_ADDRESS%/*}" ]] && printf "  %b Pi-hole DNS (IPv4): %s\\n" "${INFO}" "${IPV4_ADDRESS%/*}"
-        [[ -n "${IPV6_ADDRESS}" ]] && printf "  %b Pi-hole DNS (IPv6): %s\\n" "${INFO}" "${IPV6_ADDRESS}"
-        printf "  %b If you set a new IP address, please restart the server running the Pi-hole\\n" "${INFO}"
+        # Explain to the user how to use X-filter as their DNS server
+        printf "  %b You may now configure your devices to use the X-filter as their DNS server\\n" "${INFO}"
+        [[ -n "${IPV4_ADDRESS%/*}" ]] && printf "  %b X-filter DNS (IPv4): %s\\n" "${INFO}" "${IPV4_ADDRESS%/*}"
+        [[ -n "${IPV6_ADDRESS}" ]] && printf "  %b X-filter DNS (IPv6): %s\\n" "${INFO}" "${IPV6_ADDRESS}"
+        printf "  %b If you set a new IP address, please restart the server running the X-filter\\n" "${INFO}"
         INSTALL_TYPE="Installation"
     else
         INSTALL_TYPE="Update"
@@ -2612,7 +2612,7 @@ main() {
 
     if [[ "${INSTALL_TYPE}" == "Update" ]]; then
         printf "\\n"
-        /usr/local/bin/pihole version --current
+        /usr/local/bin/xfilter version --current
     fi
 }
 

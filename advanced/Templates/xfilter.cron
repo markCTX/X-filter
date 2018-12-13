@@ -1,0 +1,36 @@
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
+# Network-wide ad blocking via your own hardware.
+#
+# Updates ad sources every week
+#
+# This file is copyright under the latest version of the EUPL.
+# Please see LICENSE file for your rights under this license.
+#
+#
+#
+# This file is under source-control of the X-filter installation and update
+# scripts, any changes made to this file will be overwritten when the softare
+# is updated or re-installed. Please make any changes to the appropriate crontab
+# or other cron file snippets.
+
+# X-filter: Update the ad sources once a week on Sunday at a random time in the
+#          early morning. Download any updates from the adlists
+#          Squash output to log, then splat the log to stdout on error to allow for
+#          standard crontab job error handling.
+59 1    * * 7   root    PATH="$PATH:/usr/local/bin/" xfilter updateGravity >/var/log/xfilter_updateGravity.log || cat /var/log/xfilter_updateGravity.log
+
+# X-filter: Flush the log daily at 00:00
+#          The flush script will use logrotate if available
+#          parameter "once": logrotate only once (default is twice)
+#          parameter "quiet": don't print messages
+00 00   * * *   root    PATH="$PATH:/usr/local/bin/" xfilter flush once quiet
+
+@reboot root /usr/sbin/logrotate /etc/xfilter/logrotate
+
+# X-filter: Grab local version and branch every 10 minutes
+*/10 *  * * *   root    PATH="$PATH:/usr/local/bin/" xfilter updatechecker local
+
+# X-filter: Grab remote version every 24 hours
+59 17  * * *   root    PATH="$PATH:/usr/local/bin/" xfilter updatechecker remote
+@reboot root    PATH="$PATH:/usr/local/bin/" xfilter updatechecker remote reboot

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
-# Generates pihole_debug.log to be used for troubleshooting.
+# Generates xfilter_debug.log to be used for troubleshooting.
 #
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
@@ -22,12 +22,12 @@ set -o pipefail
 ######## GLOBAL VARS ########
 # These variables would normally be next to the other files
 # but we need them to be first in order to get the colors needed for the script output
-PIHOLE_SCRIPTS_DIRECTORY="/opt/pihole"
-PIHOLE_COLTABLE_FILE="${PIHOLE_SCRIPTS_DIRECTORY}/COL_TABLE"
+XFILTER_SCRIPTS_DIRECTORY="/opt/xfilter"
+XFILTER_COLTABLE_FILE="${XFILTER_SCRIPTS_DIRECTORY}/COL_TABLE"
 
 # These provide the colors we need for making the log more readable
-if [[ -f ${PIHOLE_COLTABLE_FILE} ]]; then
-  source ${PIHOLE_COLTABLE_FILE}
+if [[ -f ${XFILTER_COLTABLE_FILE} ]]; then
+  source ${XFILTER_COLTABLE_FILE}
 else
     COL_NC='\e[0m' # No Color
     COL_RED='\e[1;91m'
@@ -44,30 +44,30 @@ fi
 OBFUSCATED_PLACEHOLDER="<DOMAIN OBFUSCATED>"
 
 # FAQ URLs for use in showing the debug log
-FAQ_UPDATE_PI_HOLE="${COL_CYAN}https://discourse.pi-hole.net/t/how-do-i-update-pi-hole/249${COL_NC}"
-FAQ_CHECKOUT_COMMAND="${COL_CYAN}https://discourse.pi-hole.net/t/the-pihole-command-with-examples/738#checkout${COL_NC}"
-FAQ_HARDWARE_REQUIREMENTS="${COL_CYAN}https://discourse.pi-hole.net/t/hardware-software-requirements/273${COL_NC}"
-FAQ_HARDWARE_REQUIREMENTS_PORTS="${COL_CYAN}https://discourse.pi-hole.net/t/hardware-software-requirements/273#ports${COL_NC}"
-FAQ_GATEWAY="${COL_CYAN}https://discourse.pi-hole.net/t/why-is-a-default-gateway-important-for-pi-hole/3546${COL_NC}"
-FAQ_ULA="${COL_CYAN}https://discourse.pi-hole.net/t/use-ipv6-ula-addresses-for-pi-hole/2127${COL_NC}"
-FAQ_FTL_COMPATIBILITY="${COL_CYAN}https://github.com/pi-hole/FTL#compatibility-list${COL_NC}"
-FAQ_BAD_ADDRESS="${COL_CYAN}https://discourse.pi-hole.net/t/why-do-i-see-bad-address-at-in-pihole-log/3972${COL_NC}"
+FAQ_UPDATE_X_FILTER="${COL_CYAN}https://discourse.x-filter.net/t/how-do-i-update-x-filter/249${COL_NC}"
+FAQ_CHECKOUT_COMMAND="${COL_CYAN}https://discourse.x-filter.net/t/the-xfilter-command-with-examples/738#checkout${COL_NC}"
+FAQ_HARDWARE_REQUIREMENTS="${COL_CYAN}https://discourse.x-filter.net/t/hardware-software-requirements/273${COL_NC}"
+FAQ_HARDWARE_REQUIREMENTS_PORTS="${COL_CYAN}https://discourse.x-filter.net/t/hardware-software-requirements/273#ports${COL_NC}"
+FAQ_GATEWAY="${COL_CYAN}https://discourse.x-filter.net/t/why-is-a-default-gateway-important-for-x-filter/3546${COL_NC}"
+FAQ_ULA="${COL_CYAN}https://discourse.x-filter.net/t/use-ipv6-ula-addresses-for-x-filter/2127${COL_NC}"
+FAQ_FTL_COMPATIBILITY="${COL_CYAN}https://github.com/x-filter/FTL#compatibility-list${COL_NC}"
+FAQ_BAD_ADDRESS="${COL_CYAN}https://discourse.x-filter.net/t/why-do-i-see-bad-address-at-in-xfilter-log/3972${COL_NC}"
 
 # Other URLs we may use
-FORUMS_URL="${COL_CYAN}https://discourse.pi-hole.net${COL_NC}"
-TRICORDER_CONTEST="${COL_CYAN}https://pi-hole.net/2016/11/07/crack-our-medical-tricorder-win-a-raspberry-pi-3/${COL_NC}"
+FORUMS_URL="${COL_CYAN}https://discourse.x-filter.net${COL_NC}"
+TRICORDER_CONTEST="${COL_CYAN}https://x-filter.net/2016/11/07/crack-our-medical-tricorder-win-a-raspberry-pi-3/${COL_NC}"
 
 # Port numbers used for uploading the debug log
 TRICORDER_NC_PORT_NUMBER=9999
 TRICORDER_SSL_PORT_NUMBER=9998
 
-# Directories required by Pi-hole
-# https://discourse.pi-hole.net/t/what-files-does-pi-hole-use/1684
-CORE_GIT_DIRECTORY="/etc/.pihole"
+# Directories required by X-filter
+# https://discourse.x-filter.net/t/what-files-does-x-filter-use/1684
+CORE_GIT_DIRECTORY="/etc/.xfilter"
 CRON_D_DIRECTORY="/etc/cron.d"
 DNSMASQ_D_DIRECTORY="/etc/dnsmasq.d"
-PIHOLE_DIRECTORY="/etc/pihole"
-PIHOLE_SCRIPTS_DIRECTORY="/opt/pihole"
+XFILTER_DIRECTORY="/etc/xfilter"
+XFILTER_SCRIPTS_DIRECTORY="/opt/xfilter"
 BIN_DIRECTORY="/usr/local/bin"
 RUN_DIRECTORY="/run"
 LOG_DIRECTORY="/var/log"
@@ -75,58 +75,58 @@ WEB_SERVER_LOG_DIRECTORY="${LOG_DIRECTORY}/lighttpd"
 WEB_SERVER_CONFIG_DIRECTORY="/etc/lighttpd"
 HTML_DIRECTORY="/var/www/html"
 WEB_GIT_DIRECTORY="${HTML_DIRECTORY}/admin"
-#BLOCK_PAGE_DIRECTORY="${HTML_DIRECTORY}/pihole"
+#BLOCK_PAGE_DIRECTORY="${HTML_DIRECTORY}/xfilter"
 
-# Files required by Pi-hole
-# https://discourse.pi-hole.net/t/what-files-does-pi-hole-use/1684
-PIHOLE_CRON_FILE="${CRON_D_DIRECTORY}/pihole"
+# Files required by X-filter
+# https://discourse.x-filter.net/t/what-files-does-x-filter-use/1684
+XFILTER_CRON_FILE="${CRON_D_DIRECTORY}/xfilter"
 
-PIHOLE_DNS_CONFIG_FILE="${DNSMASQ_D_DIRECTORY}/01-pihole.conf"
-PIHOLE_DHCP_CONFIG_FILE="${DNSMASQ_D_DIRECTORY}/02-pihole-dhcp.conf"
-PIHOLE_WILDCARD_CONFIG_FILE="${DNSMASQ_D_DIRECTORY}/03-wildcard.conf"
+XFILTER_DNS_CONFIG_FILE="${DNSMASQ_D_DIRECTORY}/01-xfilter.conf"
+XFILTER_DHCP_CONFIG_FILE="${DNSMASQ_D_DIRECTORY}/02-xfilter-dhcp.conf"
+XFILTER_WILDCARD_CONFIG_FILE="${DNSMASQ_D_DIRECTORY}/03-wildcard.conf"
 
 WEB_SERVER_CONFIG_FILE="${WEB_SERVER_CONFIG_DIRECTORY}/lighttpd.conf"
 #WEB_SERVER_CUSTOM_CONFIG_FILE="${WEB_SERVER_CONFIG_DIRECTORY}/external.conf"
 
-PIHOLE_DEFAULT_AD_LISTS="${PIHOLE_DIRECTORY}/adlists.default"
-PIHOLE_USER_DEFINED_AD_LISTS="${PIHOLE_DIRECTORY}/adlists.list"
-PIHOLE_BLACKLIST_FILE="${PIHOLE_DIRECTORY}/blacklist.txt"
-PIHOLE_BLOCKLIST_FILE="${PIHOLE_DIRECTORY}/gravity.list"
-PIHOLE_INSTALL_LOG_FILE="${PIHOLE_DIRECTORY}/install.log"
-PIHOLE_RAW_BLOCKLIST_FILES="${PIHOLE_DIRECTORY}/list.*"
-PIHOLE_LOCAL_HOSTS_FILE="${PIHOLE_DIRECTORY}/local.list"
-PIHOLE_LOGROTATE_FILE="${PIHOLE_DIRECTORY}/logrotate"
-PIHOLE_SETUP_VARS_FILE="${PIHOLE_DIRECTORY}/setupVars.conf"
-PIHOLE_WHITELIST_FILE="${PIHOLE_DIRECTORY}/whitelist.txt"
+XFILTER_DEFAULT_AD_LISTS="${XFILTER_DIRECTORY}/adlists.default"
+XFILTER_USER_DEFINED_AD_LISTS="${XFILTER_DIRECTORY}/adlists.list"
+XFILTER_BLACKLIST_FILE="${XFILTER_DIRECTORY}/blacklist.txt"
+XFILTER_BLOCKLIST_FILE="${XFILTER_DIRECTORY}/gravity.list"
+XFILTER_INSTALL_LOG_FILE="${XFILTER_DIRECTORY}/install.log"
+XFILTER_RAW_BLOCKLIST_FILES="${XFILTER_DIRECTORY}/list.*"
+XFILTER_LOCAL_HOSTS_FILE="${XFILTER_DIRECTORY}/local.list"
+XFILTER_LOGROTATE_FILE="${XFILTER_DIRECTORY}/logrotate"
+XFILTER_SETUP_VARS_FILE="${XFILTER_DIRECTORY}/setupVars.conf"
+XFILTER_WHITELIST_FILE="${XFILTER_DIRECTORY}/whitelist.txt"
 
-PIHOLE_COMMAND="${BIN_DIRECTORY}/pihole"
-PIHOLE_COLTABLE_FILE="${BIN_DIRECTORY}/COL_TABLE"
+XFILTER_COMMAND="${BIN_DIRECTORY}/xfilter"
+XFILTER_COLTABLE_FILE="${BIN_DIRECTORY}/COL_TABLE"
 
-FTL_PID="${RUN_DIRECTORY}/pihole-FTL.pid"
-FTL_PORT="${RUN_DIRECTORY}/pihole-FTL.port"
+FTL_PID="${RUN_DIRECTORY}/xfilter-FTL.pid"
+FTL_PORT="${RUN_DIRECTORY}/xfilter-FTL.port"
 
-PIHOLE_LOG="${LOG_DIRECTORY}/pihole.log"
-PIHOLE_LOG_GZIPS="${LOG_DIRECTORY}/pihole.log.[0-9].*"
-PIHOLE_DEBUG_LOG="${LOG_DIRECTORY}/pihole_debug.log"
-PIHOLE_DEBUG_LOG_SANITIZED="${LOG_DIRECTORY}/pihole_debug-sanitized.log"
-PIHOLE_FTL_LOG="${LOG_DIRECTORY}/pihole-FTL.log"
+XFILTER_LOG="${LOG_DIRECTORY}/xfilter.log"
+XFILTER_LOG_GZIPS="${LOG_DIRECTORY}/xfilter.log.[0-9].*"
+XFILTER_DEBUG_LOG="${LOG_DIRECTORY}/xfilter_debug.log"
+XFILTER_DEBUG_LOG_SANITIZED="${LOG_DIRECTORY}/xfilter_debug-sanitized.log"
+XFILTER_FTL_LOG="${LOG_DIRECTORY}/xfilter-FTL.log"
 
-PIHOLE_WEB_SERVER_ACCESS_LOG_FILE="${WEB_SERVER_LOG_DIRECTORY}/access.log"
-PIHOLE_WEB_SERVER_ERROR_LOG_FILE="${WEB_SERVER_LOG_DIRECTORY}/error.log"
+XFILTER_WEB_SERVER_ACCESS_LOG_FILE="${WEB_SERVER_LOG_DIRECTORY}/access.log"
+XFILTER_WEB_SERVER_ERROR_LOG_FILE="${WEB_SERVER_LOG_DIRECTORY}/error.log"
 
 # An array of operating system "pretty names" that we officialy support
 # We can loop through the array at any time to see if it matches a value
 #SUPPORTED_OS=("Raspbian" "Ubuntu" "Fedora" "Debian" "CentOS")
 
-# Store Pi-hole's processes in an array for easy use and parsing
-PIHOLE_PROCESSES=( "lighttpd" "pihole-FTL" )
+# Store X-filter's processes in an array for easy use and parsing
+XFILTER_PROCESSES=( "lighttpd" "xfilter-FTL" )
 
 # Store the required directories in an array so it can be parsed through
 #REQUIRED_DIRECTORIES=("${CORE_GIT_DIRECTORY}"
 #"${CRON_D_DIRECTORY}"
 #"${DNSMASQ_D_DIRECTORY}"
-#"${PIHOLE_DIRECTORY}"
-#"${PIHOLE_SCRIPTS_DIRECTORY}"
+#"${XFILTER_DIRECTORY}"
+#"${XFILTER_SCRIPTS_DIRECTORY}"
 #"${BIN_DIRECTORY}"
 #"${RUN_DIRECTORY}"
 #"${LOG_DIRECTORY}"
@@ -137,37 +137,37 @@ PIHOLE_PROCESSES=( "lighttpd" "pihole-FTL" )
 #"${BLOCK_PAGE_DIRECTORY}")
 
 # Store the required directories in an array so it can be parsed through
-REQUIRED_FILES=("${PIHOLE_CRON_FILE}"
-"${PIHOLE_DNS_CONFIG_FILE}"
-"${PIHOLE_DHCP_CONFIG_FILE}"
-"${PIHOLE_WILDCARD_CONFIG_FILE}"
+REQUIRED_FILES=("${XFILTER_CRON_FILE}"
+"${XFILTER_DNS_CONFIG_FILE}"
+"${XFILTER_DHCP_CONFIG_FILE}"
+"${XFILTER_WILDCARD_CONFIG_FILE}"
 "${WEB_SERVER_CONFIG_FILE}"
-"${PIHOLE_DEFAULT_AD_LISTS}"
-"${PIHOLE_USER_DEFINED_AD_LISTS}"
-"${PIHOLE_BLACKLIST_FILE}"
-"${PIHOLE_BLOCKLIST_FILE}"
-"${PIHOLE_INSTALL_LOG_FILE}"
-"${PIHOLE_RAW_BLOCKLIST_FILES}"
-"${PIHOLE_LOCAL_HOSTS_FILE}"
-"${PIHOLE_LOGROTATE_FILE}"
-"${PIHOLE_SETUP_VARS_FILE}"
-"${PIHOLE_WHITELIST_FILE}"
-"${PIHOLE_COMMAND}"
-"${PIHOLE_COLTABLE_FILE}"
+"${XFILTER_DEFAULT_AD_LISTS}"
+"${XFILTER_USER_DEFINED_AD_LISTS}"
+"${XFILTER_BLACKLIST_FILE}"
+"${XFILTER_BLOCKLIST_FILE}"
+"${XFILTER_INSTALL_LOG_FILE}"
+"${XFILTER_RAW_BLOCKLIST_FILES}"
+"${XFILTER_LOCAL_HOSTS_FILE}"
+"${XFILTER_LOGROTATE_FILE}"
+"${XFILTER_SETUP_VARS_FILE}"
+"${XFILTER_WHITELIST_FILE}"
+"${XFILTER_COMMAND}"
+"${XFILTER_COLTABLE_FILE}"
 "${FTL_PID}"
 "${FTL_PORT}"
-"${PIHOLE_LOG}"
-"${PIHOLE_LOG_GZIPS}"
-"${PIHOLE_DEBUG_LOG}"
-"${PIHOLE_FTL_LOG}"
-"${PIHOLE_WEB_SERVER_ACCESS_LOG_FILE}"
-"${PIHOLE_WEB_SERVER_ERROR_LOG_FILE}")
+"${XFILTER_LOG}"
+"${XFILTER_LOG_GZIPS}"
+"${XFILTER_DEBUG_LOG}"
+"${XFILTER_FTL_LOG}"
+"${XFILTER_WEB_SERVER_ACCESS_LOG_FILE}"
+"${XFILTER_WEB_SERVER_ERROR_LOG_FILE}")
 
-DISCLAIMER="This process collects information from your Pi-hole, and optionally uploads it to a unique and random directory on tricorder.pi-hole.net.
+DISCLAIMER="This process collects information from your X-filter, and optionally uploads it to a unique and random directory on tricorder.x-filter.net.
 
-The intent of this script is to allow users to self-diagnose their installations.  This is accomplished by running tests against our software and providing the user with links to FAQ articles when a problem is detected.  Since we are a small team and Pi-hole has been growing steadily, it is our hope that this will help us spend more time on development.
+The intent of this script is to allow users to self-diagnose their installations.  This is accomplished by running tests against our software and providing the user with links to FAQ articles when a problem is detected.  Since we are a small team and X-filter has been growing steadily, it is our hope that this will help us spend more time on development.
 
-NOTE: All log files auto-delete after 48 hours and ONLY the Pi-hole developers can access your data via the given token. We have taken these extra steps to secure your data and will work to further reduce any personal information gathered.
+NOTE: All log files auto-delete after 48 hours and ONLY the X-filter developers can access your data via the given token. We have taken these extra steps to secure your data and will work to further reduce any personal information gathered.
 "
 
 show_disclaimer(){
@@ -178,19 +178,19 @@ source_setup_variables() {
     # Display the current test that is running
     log_write "\\n${COL_PURPLE}*** [ INITIALIZING ]${COL_NC} Sourcing setup variables"
     # If the variable file exists,
-    if ls "${PIHOLE_SETUP_VARS_FILE}" 1> /dev/null 2>&1; then
-        log_write "${INFO} Sourcing ${PIHOLE_SETUP_VARS_FILE}...";
+    if ls "${XFILTER_SETUP_VARS_FILE}" 1> /dev/null 2>&1; then
+        log_write "${INFO} Sourcing ${XFILTER_SETUP_VARS_FILE}...";
         # source it
-        source ${PIHOLE_SETUP_VARS_FILE}
+        source ${XFILTER_SETUP_VARS_FILE}
     else
         # If it can't, show an error
-        log_write "${PIHOLE_SETUP_VARS_FILE} ${COL_RED}does not exist or cannot be read.${COL_NC}"
+        log_write "${XFILTER_SETUP_VARS_FILE} ${COL_RED}does not exist or cannot be read.${COL_NC}"
     fi
 }
 
 make_temporary_log() {
     # Create a random temporary file for the log
-    TEMPLOG=$(mktemp /tmp/pihole_temp.XXXXXX)
+    TEMPLOG=$(mktemp /tmp/xfilter_temp.XXXXXX)
     # Open handle 3 for templog
     # https://stackoverflow.com/questions/18460186/writing-outputs-to-log-file-and-console
     exec 3>"$TEMPLOG"
@@ -207,12 +207,12 @@ log_write() {
 
 copy_to_debug_log() {
     # Copy the contents of file descriptor 3 into the debug log
-    cat /proc/$$/fd/3 > "${PIHOLE_DEBUG_LOG}"
+    cat /proc/$$/fd/3 > "${XFILTER_DEBUG_LOG}"
     # Since we use color codes such as '\e[1;33m', they should be removed before being
     # uploaded to our server, since it can't properly display in color
     # This is accomplished by use sed to remove characters matching that patter
     # The entire file is then copied over to a sanitized version of the log
-    sed 's/\[[0-9;]\{1,5\}m//g' > "${PIHOLE_DEBUG_LOG_SANITIZED}" <<< cat "${PIHOLE_DEBUG_LOG}"
+    sed 's/\[[0-9;]\{1,5\}m//g' > "${XFILTER_DEBUG_LOG_SANITIZED}" <<< cat "${XFILTER_DEBUG_LOG}"
 }
 
 initialize_debug() {
@@ -238,21 +238,21 @@ compare_local_version_to_git_version() {
     # The git directory to check
     local git_dir="${1}"
     # The named component of the project (Core or Web)
-    local pihole_component="${2}"
+    local xfilter_component="${2}"
     # If we are checking the Core versions,
-    if [[ "${pihole_component}" == "Core" ]]; then
-        # We need to search for "Pi-hole" when using pihole -v
-        local search_term="Pi-hole"
-    elif [[ "${pihole_component}" == "Web" ]]; then
+    if [[ "${xfilter_component}" == "Core" ]]; then
+        # We need to search for "X-filter" when using xfilter -v
+        local search_term="X-filter"
+    elif [[ "${xfilter_component}" == "Web" ]]; then
         # We need to search for "AdminLTE" so store it in a variable as well
         #shellcheck disable=2034
         local search_term="AdminLTE"
     fi
     # Display what we are checking
-    echo_current_diagnostic "${pihole_component} version"
+    echo_current_diagnostic "${xfilter_component} version"
     # Store the error message in a variable in case we want to change and/or reuse it
     local error_msg="git status failed"
-    # If the pihole git directory exists,
+    # If the xfilter git directory exists,
     if [[ -d "${git_dir}" ]]; then
         # move into it
         cd "${git_dir}" || \
@@ -269,14 +269,14 @@ compare_local_version_to_git_version() {
             local remote_commit
             remote_commit=$(git describe --long --dirty --tags --always)
             # echo this information out to the user in a nice format
-            # If the current version matches what pihole -v produces, the user is up-to-date
-            if [[ "${remote_version}" == "$(pihole -v | awk '/${search_term}/ {print $6}' | cut -d ')' -f1)" ]]; then
-                log_write "${TICK} ${pihole_component}: ${COL_GREEN}${remote_version}${COL_NC}"
+            # If the current version matches what xfilter -v produces, the user is up-to-date
+            if [[ "${remote_version}" == "$(xfilter -v | awk '/${search_term}/ {print $6}' | cut -d ')' -f1)" ]]; then
+                log_write "${TICK} ${xfilter_component}: ${COL_GREEN}${remote_version}${COL_NC}"
             # If not,
             else
                 # echo the current version in yellow, signifying it's something to take a look at, but not a critical error
                 # Also add a URL to an FAQ
-                log_write "${INFO} ${pihole_component}: ${COL_YELLOW}${remote_version:-Untagged}${COL_NC} (${FAQ_UPDATE_PI_HOLE})"
+                log_write "${INFO} ${xfilter_component}: ${COL_YELLOW}${remote_version:-Untagged}${COL_NC} (${FAQ_UPDATE_X_FILTER})"
             fi
 
             # If the repo is on the master branch, they are on the stable codebase
@@ -306,18 +306,18 @@ check_ftl_version() {
     local ftl_name="FTL"
     echo_current_diagnostic "${ftl_name} version"
     # Use the built in command to check FTL's version
-    FTL_VERSION=$(pihole-FTL version)
+    FTL_VERSION=$(xfilter-FTL version)
     # Compare the current FTL version to the remote version
-    if [[ "${FTL_VERSION}" == "$(pihole -v | awk '/FTL/ {print $6}' | cut -d ')' -f1)" ]]; then
+    if [[ "${FTL_VERSION}" == "$(xfilter -v | awk '/FTL/ {print $6}' | cut -d ')' -f1)" ]]; then
         # If they are the same, FTL is up-to-date
         log_write "${TICK} ${ftl_name}: ${COL_GREEN}${FTL_VERSION}${COL_NC}"
     else
         # If not, show it in yellow, signifying there is an update
-        log_write "${TICK} ${ftl_name}: ${COL_YELLOW}${FTL_VERSION}${COL_NC} (${FAQ_UPDATE_PI_HOLE})"
+        log_write "${TICK} ${ftl_name}: ${COL_YELLOW}${FTL_VERSION}${COL_NC} (${FAQ_UPDATE_X_FILTER})"
     fi
 }
 
-# Checks the core version of the Pi-hole codebase
+# Checks the core version of the X-filter codebase
 check_component_versions() {
     # Check the Web version, branch, and commit
     compare_local_version_to_git_version "${CORE_GIT_DIRECTORY}" "Core"
@@ -352,7 +352,7 @@ get_program_version() {
     fi
 }
 
-# These are the most critical dependencies of Pi-hole, so we check for them
+# These are the most critical dependencies of X-filter, so we check for them
 # and their versions, using the functions above.
 check_critical_program_versions() {
     # Use the function created earlier and bundle them into one function that checks all the version numbers
@@ -426,7 +426,7 @@ diagnose_operating_system() {
 }
 
 check_selinux() {
-    # SELinux is not supported by the Pi-hole
+    # SELinux is not supported by the X-filter
     echo_current_diagnostic "SELinux"
     # Check if a SELinux configuration file exists
     if [[ -f /etc/selinux/config ]]; then
@@ -486,20 +486,20 @@ processor_check() {
 parse_setup_vars() {
     echo_current_diagnostic "Setup variables"
     # If the file exists,
-    if [[ -r "${PIHOLE_SETUP_VARS_FILE}" ]]; then
+    if [[ -r "${XFILTER_SETUP_VARS_FILE}" ]]; then
         # parse it
-        parse_file "${PIHOLE_SETUP_VARS_FILE}"
+        parse_file "${XFILTER_SETUP_VARS_FILE}"
     else
         # If not, show an error
-        log_write "${CROSS} ${COL_RED}Could not read ${PIHOLE_SETUP_VARS_FILE}.${COL_NC}"
+        log_write "${CROSS} ${COL_RED}Could not read ${XFILTER_SETUP_VARS_FILE}.${COL_NC}"
     fi
 }
 
 parse_locale() {
-    local pihole_locale
+    local xfilter_locale
     echo_current_diagnostic "Locale"
-    pihole_locale="$(locale)"
-    parse_file "${pihole_locale}"
+    xfilter_locale="$(locale)"
+    parse_file "${xfilter_locale}"
 }
 
 does_ip_match_setup_vars() {
@@ -509,16 +509,16 @@ does_ip_match_setup_vars() {
     local ip_address="${2}"
     # See what IP is in the setupVars.conf file
     local setup_vars_ip
-    setup_vars_ip=$(< ${PIHOLE_SETUP_VARS_FILE} grep IPV"${protocol}"_ADDRESS | cut -d '=' -f2)
+    setup_vars_ip=$(< ${XFILTER_SETUP_VARS_FILE} grep IPV"${protocol}"_ADDRESS | cut -d '=' -f2)
     # If it's an IPv6 address
     if [[ "${protocol}" == "6" ]]; then
         # Strip off the / (CIDR notation)
         if [[ "${ip_address%/*}" == "${setup_vars_ip%/*}" ]]; then
             # if it matches, show it in green
-            log_write "   ${COL_GREEN}${ip_address%/*}${COL_NC} matches the IP found in ${PIHOLE_SETUP_VARS_FILE}"
+            log_write "   ${COL_GREEN}${ip_address%/*}${COL_NC} matches the IP found in ${XFILTER_SETUP_VARS_FILE}"
         else
             # otherwise show it in red with an FAQ URL
-            log_write "   ${COL_RED}${ip_address%/*}${COL_NC} does not match the IP found in ${PIHOLE_SETUP_VARS_FILE} (${FAQ_ULA})"
+            log_write "   ${COL_RED}${ip_address%/*}${COL_NC} does not match the IP found in ${XFILTER_SETUP_VARS_FILE} (${FAQ_ULA})"
         fi
 
     else
@@ -526,10 +526,10 @@ does_ip_match_setup_vars() {
         # since it exists in the setupVars.conf that way
         if [[ "${ip_address}" == "${setup_vars_ip}" ]]; then
             # show in green if it matches
-            log_write "   ${COL_GREEN}${ip_address}${COL_NC} matches the IP found in ${PIHOLE_SETUP_VARS_FILE}"
+            log_write "   ${COL_GREEN}${ip_address}${COL_NC} matches the IP found in ${XFILTER_SETUP_VARS_FILE}"
         else
             # otherwise show it in red
-            log_write "   ${COL_RED}${ip_address}${COL_NC} does not match the IP found in ${PIHOLE_SETUP_VARS_FILE} (${FAQ_ULA})"
+            log_write "   ${COL_RED}${ip_address}${COL_NC} does not match the IP found in ${XFILTER_SETUP_VARS_FILE} (${FAQ_ULA})"
         fi
     fi
 }
@@ -540,14 +540,14 @@ detect_ip_addresses() {
     # Use ip to show the addresses for the chosen protocol
     # Store the values in an arry so they can be looped through
     # Get the lines that are in the file(s) and store them in an array for parsing later
-    mapfile -t ip_addr_list < <(ip -"${protocol}" addr show dev "${PIHOLE_INTERFACE}" | awk -F ' ' '{ for(i=1;i<=NF;i++) if ($i ~ '/^inet/') print $(i+1) }')
+    mapfile -t ip_addr_list < <(ip -"${protocol}" addr show dev "${XFILTER_INTERFACE}" | awk -F ' ' '{ for(i=1;i<=NF;i++) if ($i ~ '/^inet/') print $(i+1) }')
 
     # If there is something in the IP address list,
     if [[ -n ${ip_addr_list[*]} ]]; then
         # Local iterator
         local i
         # Display the protocol and interface
-        log_write "${TICK} IPv${protocol} address(es) bound to the ${PIHOLE_INTERFACE} interface:"
+        log_write "${TICK} IPv${protocol} address(es) bound to the ${XFILTER_INTERFACE} interface:"
         # Since there may be more than one IP address, store them in an array
         for i in "${!ip_addr_list[@]}"; do
             # For each one in the list, print it out
@@ -557,14 +557,14 @@ detect_ip_addresses() {
         log_write ""
     else
         # If there are no IPs detected, explain that the protocol is not configured
-        log_write "${CROSS} ${COL_RED}No IPv${protocol} address(es) found on the ${PIHOLE_INTERFACE}${COL_NC} interface.\\n"
+        log_write "${CROSS} ${COL_RED}No IPv${protocol} address(es) found on the ${XFILTER_INTERFACE}${COL_NC} interface.\\n"
         return 1
     fi
     # If the protocol is v6
     if [[ "${protocol}" == "6" ]]; then
         # let the user know that as long as there is one green address, things should be ok
         log_write "   ^ Please note that you may have more than one IP address listed."
-        log_write "   As long as one of them is green, and it matches what is in ${PIHOLE_SETUP_VARS_FILE}, there is no need for concern.\\n"
+        log_write "   As long as one of them is green, and it matches what is in ${XFILTER_SETUP_VARS_FILE}, there is no need for concern.\\n"
         log_write "   The link to the FAQ is for an issue that sometimes occurs when the IPv6 address changes, which is why we check for it.\\n"
     fi
 }
@@ -600,9 +600,9 @@ ping_gateway() {
         # Let the user know we will ping the gateway for a response
         log_write "   * Pinging ${gateway}..."
         # Try to quietly ping the gateway 3 times, with a timeout of 3 seconds, using numeric output only,
-        # on the pihole interface, and tail the last three lines of the output
+        # on the xfilter interface, and tail the last three lines of the output
         # If pinging the gateway is not successful,
-        if ! ${cmd} -c 1 -W 2 -n "${gateway}" -I "${PIHOLE_INTERFACE}" >/dev/null; then
+        if ! ${cmd} -c 1 -W 2 -n "${gateway}" -I "${XFILTER_INTERFACE}" >/dev/null; then
             # let the user know
             log_write "${CROSS} ${COL_RED}Gateway did not respond.${COL_NC} ($FAQ_GATEWAY)\\n"
             # and return an error code
@@ -623,7 +623,7 @@ ping_internet() {
     ping_ipv4_or_ipv6 "${protocol}"
     log_write "* Checking Internet connectivity via IPv${protocol}..."
     # Try to ping the address 3 times
-    if ! ${cmd} -c 1 -W 2 -n ${public_address} -I "${PIHOLE_INTERFACE}" >/dev/null; then
+    if ! ${cmd} -c 1 -W 2 -n ${public_address} -I "${XFILTER_INTERFACE}" >/dev/null; then
         # if it's unsuccessful, show an error
         log_write "${CROSS} ${COL_RED}Cannot reach the Internet.${COL_NC}\\n"
         return 1
@@ -637,11 +637,11 @@ ping_internet() {
 compare_port_to_service_assigned() {
     local service_name="${1}"
     # The programs we use may change at some point, so they are in a varible here
-    local resolver="pihole-FTL"
+    local resolver="xfilter-FTL"
     local web_server="lighttpd"
-    local ftl="pihole-FTL"
+    local ftl="xfilter-FTL"
 
-    # If the service is a Pi-hole service, highlight it in green
+    # If the service is a X-filter service, highlight it in green
     if [[ "${service_name}" == "${resolver}" ]] || [[ "${service_name}" == "${web_server}" ]] || [[ "${service_name}" == "${ftl}" ]]; then
         log_write "[${COL_GREEN}${port_number}${COL_NC}] is in use by ${COL_GREEN}${service_name}${COL_NC}"
     # Otherwise,
@@ -653,11 +653,11 @@ compare_port_to_service_assigned() {
 
 check_required_ports() {
     echo_current_diagnostic "Ports in use"
-    # Since Pi-hole needs 53, 80, and 4711, check what they are being used by
+    # Since X-filter needs 53, 80, and 4711, check what they are being used by
     # so we can detect any issues
-    local resolver="pihole-FTL"
+    local resolver="xfilter-FTL"
     local web_server="lighttpd"
-    local ftl="pihole-FTL"
+    local ftl="xfilter-FTL"
     # Create an array for these ports in use
     ports_in_use=()
     # Sort the addresses and remove duplicates
@@ -687,7 +687,7 @@ check_required_ports() {
                 ;;
             4711) compare_port_to_service_assigned  "${ftl}"
                 ;;
-            # If it's not a default port that Pi-hole needs, just print it out for the user to see
+            # If it's not a default port that X-filter needs, just print it out for the user to see
             *) log_write "${port_number} ${service_name} (${protocol_type})";
         esac
     done
@@ -706,23 +706,23 @@ check_networking() {
 
 check_x_headers() {
     # The X-Headers allow us to determine from the command line if the Web
-    # lighttpd.conf has a directive to show "X-Pi-hole: A black hole for Internet advertisements."
-    # in the header of any Pi-holed domain
-    # Similarly, it will show "X-Pi-hole: The Pi-hole Web interface is working!" if you view the header returned
+    # lighttpd.conf has a directive to show "X-X-filter: A black hole for Internet advertisements."
+    # in the header of any X-filterd domain
+    # Similarly, it will show "X-X-filter: The X-filter Web interface is working!" if you view the header returned
     # when accessing the dashboard (i.e curl -I pi.hole/admin/)
     # server is operating correctly
     echo_current_diagnostic "Dashboard and block page"
-    # Use curl -I to get the header and parse out just the X-Pi-hole one
+    # Use curl -I to get the header and parse out just the X-X-filter one
     local block_page
-    block_page=$(curl -Is localhost | awk '/X-Pi-hole/' | tr -d '\r')
+    block_page=$(curl -Is localhost | awk '/X-X-filter/' | tr -d '\r')
     # Do it for the dashboard as well, as the header is different than above
     local dashboard
-    dashboard=$(curl -Is localhost/admin/ | awk '/X-Pi-hole/' | tr -d '\r')
+    dashboard=$(curl -Is localhost/admin/ | awk '/X-X-filter/' | tr -d '\r')
     # Store what the X-Header shoud be in variables for comparision later
     local block_page_working
-    block_page_working="X-Pi-hole: A black hole for Internet advertisements."
+    block_page_working="X-X-filter: A black hole for Internet advertisements."
     local dashboard_working
-    dashboard_working="X-Pi-hole: The Pi-hole Web interface is working!"
+    dashboard_working="X-X-filter: The X-filter Web interface is working!"
     local full_curl_output_block_page
     full_curl_output_block_page="$(curl -Is localhost)"
     local full_curl_output_dashboard
@@ -749,7 +749,7 @@ check_x_headers() {
 }
 
 dig_at() {
-    # We need to test if Pi-hole can properly resolve domain names
+    # We need to test if X-filter can properly resolve domain names
     # as it is an essential piece of the software
 
     # Store the arguments as variables with names
@@ -757,9 +757,9 @@ dig_at() {
     local IP="${2}"
     echo_current_diagnostic "Name resolution (IPv${protocol}) using a random blocked domain and a known ad-serving domain"
     # Set more local variables
-    # We need to test name resolution locally, via Pi-hole, and via a public resolver
+    # We need to test name resolution locally, via X-filter, and via a public resolver
     local local_dig
-    local pihole_dig
+    local xfilter_dig
     local remote_dig
     # Use a static domain that we know has IPv4 and IPv6 to avoid false positives
     # Sometimes the randomly chosen domains don't use IPv6, or something else is wrong with them
@@ -769,25 +769,25 @@ dig_at() {
     if [[ ${protocol} == "6" ]]; then
         # Set the IPv6 variables and record type
         local local_address="::1"
-        local pihole_address="${IP}"
+        local xfilter_address="${IP}"
         local remote_address="2001:4860:4860::8888"
         local record_type="AAAA"
     # Othwerwise, it should be 4
     else
         # so use the IPv4 values
         local local_address="127.0.0.1"
-        local pihole_address="${IP}"
+        local xfilter_address="${IP}"
         local remote_address="8.8.8.8"
         local record_type="A"
     fi
 
     # Find a random blocked url that has not been whitelisted.
     # This helps emulate queries to different domains that a user might query
-    # It will also give extra assurance that Pi-hole is correctly resolving and blocking domains
+    # It will also give extra assurance that X-filter is correctly resolving and blocking domains
     local random_url
-    random_url=$(shuf -n 1 "${PIHOLE_BLOCKLIST_FILE}")
+    random_url=$(shuf -n 1 "${XFILTER_BLOCKLIST_FILE}")
 
-    # First, do a dig on localhost to see if Pi-hole can use itself to block a domain
+    # First, do a dig on localhost to see if X-filter can use itself to block a domain
     if local_dig=$(dig +tries=1 +time=2 -"${protocol}" "${random_url}" @${local_address} +short "${record_type}"); then
         # If it can, show sucess
         log_write "${TICK} ${random_url} ${COL_GREEN}is ${local_dig}${COL_NC} via ${COL_CYAN}localhost$COL_NC (${local_address})"
@@ -796,24 +796,24 @@ dig_at() {
         log_write "${CROSS} ${COL_RED}Failed to resolve${COL_NC} ${random_url} via ${COL_RED}localhost${COL_NC} (${local_address})"
     fi
 
-    # Next we need to check if Pi-hole can resolve a domain when the query is sent to it's IP address
-    # This better emulates how clients will interact with Pi-hole as opposed to above where Pi-hole is
+    # Next we need to check if X-filter can resolve a domain when the query is sent to it's IP address
+    # This better emulates how clients will interact with X-filter as opposed to above where X-filter is
     # just asing itself locally
     # The default timeouts and tries are reduced in case the DNS server isn't working, so the user isn't waiting for too long
 
-    # If Pi-hole can dig itself from it's IP (not the loopback address)
-    if pihole_dig=$(dig +tries=1 +time=2 -"${protocol}" "${random_url}" @"${pihole_address}" +short "${record_type}"); then
+    # If X-filter can dig itself from it's IP (not the loopback address)
+    if xfilter_dig=$(dig +tries=1 +time=2 -"${protocol}" "${random_url}" @"${xfilter_address}" +short "${record_type}"); then
         # show a success
-        log_write "${TICK} ${random_url} ${COL_GREEN}is ${pihole_dig}${COL_NC} via ${COL_CYAN}Pi-hole${COL_NC} (${pihole_address})"
+        log_write "${TICK} ${random_url} ${COL_GREEN}is ${xfilter_dig}${COL_NC} via ${COL_CYAN}X-filter${COL_NC} (${xfilter_address})"
     else
         # Othewise, show a failure
-        log_write "${CROSS} ${COL_RED}Failed to resolve${COL_NC} ${random_url} via ${COL_RED}Pi-hole${COL_NC} (${pihole_address})"
+        log_write "${CROSS} ${COL_RED}Failed to resolve${COL_NC} ${random_url} via ${COL_RED}X-filter${COL_NC} (${xfilter_address})"
     fi
 
     # Finally, we need to make sure legitimate queries can out to the Internet using an external, public DNS server
     # We are using the static remote_url here instead of a random one because we know it works with IPv4 and IPv6
     if remote_dig=$(dig +tries=1 +time=2 -"${protocol}" "${remote_url}" @${remote_address} +short "${record_type}" | head -n1); then
-        # If successful, the real IP of the domain will be returned instead of Pi-hole's IP
+        # If successful, the real IP of the domain will be returned instead of X-filter's IP
         log_write "${TICK} ${remote_url} ${COL_GREEN}is ${remote_dig}${COL_NC} via ${COL_CYAN}a remote, public DNS server${COL_NC} (${remote_address})"
     else
         # Otherwise, show an error
@@ -822,12 +822,12 @@ dig_at() {
 }
 
 process_status(){
-    # Check to make sure Pi-hole's services are running and active
-    echo_current_diagnostic "Pi-hole processes"
+    # Check to make sure X-filter's services are running and active
+    echo_current_diagnostic "X-filter processes"
     # Local iterator
     local i
     # For each process,
-    for i in "${PIHOLE_PROCESSES[@]}"; do
+    for i in "${XFILTER_PROCESSES[@]}"; do
         # If systemd
         if command -v systemctl &> /dev/null; then
             # get its status via systemctl
@@ -927,7 +927,7 @@ parse_file() {
 }
 
 check_name_resolution() {
-    # Check name resoltion from localhost, Pi-hole's IP, and Google's name severs
+    # Check name resoltion from localhost, X-filter's IP, and Google's name severs
     # using the function we created earlier
     dig_at 4 "${IPV4_ADDRESS%/*}"
     # If IPv6 enabled,
@@ -938,7 +938,7 @@ check_name_resolution() {
 }
 
 # This function can check a directory exists
-# Pi-hole has files in several places, so we will reuse this function
+# X-filter has files in several places, so we will reuse this function
 dir_check() {
     # Set the first argument passed to tihs function as a named variable for better readability
     local directory="${1}"
@@ -967,14 +967,14 @@ list_files_in_dir() {
         if [[ -d "${dir_to_parse}/${each_file}" ]]; then
             # If it's a directoy, do nothing
             :
-        elif [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_BLOCKLIST_FILE}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_DEBUG_LOG}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_RAW_BLOCKLIST_FILES}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_INSTALL_LOG_FILE}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_SETUP_VARS_FILE}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_LOG}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_WEB_SERVER_ACCESS_LOG_FILE}" ]] || \
-            [[ "${dir_to_parse}/${each_file}" == "${PIHOLE_LOG_GZIPS}" ]]; then
+        elif [[ "${dir_to_parse}/${each_file}" == "${XFILTER_BLOCKLIST_FILE}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_DEBUG_LOG}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_RAW_BLOCKLIST_FILES}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_INSTALL_LOG_FILE}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_SETUP_VARS_FILE}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_LOG}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_WEB_SERVER_ACCESS_LOG_FILE}" ]] || \
+            [[ "${dir_to_parse}/${each_file}" == "${XFILTER_LOG_GZIPS}" ]]; then
             :
         else
             # Then, parse the file's content into an array so each line can be analyzed if need be
@@ -985,16 +985,16 @@ list_files_in_dir() {
                     # Check if the file we want to view has a limit (because sometimes we just need a little bit of info from the file, not the entire thing)
                     case "${dir_to_parse}/${each_file}" in
                         # If it's Web server error log, just give the first 25 lines
-                        "${PIHOLE_WEB_SERVER_ERROR_LOG_FILE}") make_array_from_file "${dir_to_parse}/${each_file}" 25
+                        "${XFILTER_WEB_SERVER_ERROR_LOG_FILE}") make_array_from_file "${dir_to_parse}/${each_file}" 25
                             ;;
                         # Same for the FTL log
-                        "${PIHOLE_FTL_LOG}") head_tail_log "${dir_to_parse}/${each_file}" 35
+                        "${XFILTER_FTL_LOG}") head_tail_log "${dir_to_parse}/${each_file}" 35
                             ;;
                         # parse the file into an array in case we ever need to analyze it line-by-line
                         *) make_array_from_file "${dir_to_parse}/${each_file}";
                     esac
                 else
-                    # Otherwise, do nothing since it's not a file needed for Pi-hole so we don't care about it
+                    # Otherwise, do nothing since it's not a file needed for X-filter so we don't care about it
                     :
                 fi
             done
@@ -1011,9 +1011,9 @@ show_content_of_files_in_dir() {
     list_files_in_dir "${directory}"
 }
 
-show_content_of_pihole_files() {
-    # Show the content of the files in each of Pi-hole's folders
-    show_content_of_files_in_dir "${PIHOLE_DIRECTORY}"
+show_content_of_xfilter_files() {
+    # Show the content of the files in each of X-filter's folders
+    show_content_of_files_in_dir "${XFILTER_DIRECTORY}"
     show_content_of_files_in_dir "${DNSMASQ_D_DIRECTORY}"
     show_content_of_files_in_dir "${WEB_SERVER_CONFIG_DIRECTORY}"
     show_content_of_files_in_dir "${CRON_D_DIRECTORY}"
@@ -1058,18 +1058,18 @@ analyze_gravity_list() {
     # Get the lines that are in the file(s) and store them in an array for parsing later
     IFS=$'\r\n'
     local gravity_permissions
-    gravity_permissions=$(ls -ld "${PIHOLE_BLOCKLIST_FILE}")
+    gravity_permissions=$(ls -ld "${XFILTER_BLOCKLIST_FILE}")
     log_write "${COL_GREEN}${gravity_permissions}${COL_NC}"
     local gravity_head=()
-    mapfile -t gravity_head < <(head -n 4 ${PIHOLE_BLOCKLIST_FILE})
-    log_write "   ${COL_CYAN}-----head of $(basename ${PIHOLE_BLOCKLIST_FILE})------${COL_NC}"
+    mapfile -t gravity_head < <(head -n 4 ${XFILTER_BLOCKLIST_FILE})
+    log_write "   ${COL_CYAN}-----head of $(basename ${XFILTER_BLOCKLIST_FILE})------${COL_NC}"
     for head_line in "${gravity_head[@]}"; do
         log_write "   ${head_line}"
     done
     log_write ""
     local gravity_tail=()
-    mapfile -t gravity_tail < <(tail -n 4 ${PIHOLE_BLOCKLIST_FILE})
-    log_write "   ${COL_CYAN}-----tail of $(basename ${PIHOLE_BLOCKLIST_FILE})------${COL_NC}"
+    mapfile -t gravity_tail < <(tail -n 4 ${XFILTER_BLOCKLIST_FILE})
+    log_write "   ${COL_CYAN}-----tail of $(basename ${XFILTER_BLOCKLIST_FILE})------${COL_NC}"
     for tail_line in "${gravity_tail[@]}"; do
         log_write "   ${tail_line}"
     done
@@ -1077,24 +1077,24 @@ analyze_gravity_list() {
     IFS="$OLD_IFS"
 }
 
-analyze_pihole_log() {
-    echo_current_diagnostic "Pi-hole log"
+analyze_xfilter_log() {
+    echo_current_diagnostic "X-filter log"
     local head_line
     # Put the current Internal Field Separator into another variable so it can be restored later
     OLD_IFS="$IFS"
     # Get the lines that are in the file(s) and store them in an array for parsing later
     IFS=$'\r\n'
-    local pihole_log_permissions
-    pihole_log_permissions=$(ls -ld "${PIHOLE_LOG}")
-    log_write "${COL_GREEN}${pihole_log_permissions}${COL_NC}"
-    local pihole_log_head=()
-    mapfile -t pihole_log_head < <(head -n 20 ${PIHOLE_LOG})
-    log_write "   ${COL_CYAN}-----head of $(basename ${PIHOLE_LOG})------${COL_NC}"
+    local xfilter_log_permissions
+    xfilter_log_permissions=$(ls -ld "${XFILTER_LOG}")
+    log_write "${COL_GREEN}${xfilter_log_permissions}${COL_NC}"
+    local xfilter_log_head=()
+    mapfile -t xfilter_log_head < <(head -n 20 ${XFILTER_LOG})
+    log_write "   ${COL_CYAN}-----head of $(basename ${XFILTER_LOG})------${COL_NC}"
     local error_to_check_for
     local line_to_obfuscate
     local obfuscated_line
-    for head_line in "${pihole_log_head[@]}"; do
-        # A common error in the pihole.log is when there is a non-hosts formatted file
+    for head_line in "${xfilter_log_head[@]}"; do
+        # A common error in the xfilter.log is when there is a non-hosts formatted file
         # that the DNS server is attempting to read.  Since it's not formatted
         # correctly, there will be an entry for "bad address at line n"
         # So we can check for that here and highlight it in red so the user can see it easily
@@ -1136,22 +1136,22 @@ tricorder_use_nc_or_ssl() {
         # If the command exists,
         log_write "    * Using ${COL_GREEN}openssl${COL_NC} for transmission."
         # encrypt and transmit the log and store the token returned in a variable
-        tricorder_token=$(< ${PIHOLE_DEBUG_LOG_SANITIZED} openssl s_client -quiet -connect tricorder.pi-hole.net:${TRICORDER_SSL_PORT_NUMBER} 2> /dev/null)
+        tricorder_token=$(< ${XFILTER_DEBUG_LOG_SANITIZED} openssl s_client -quiet -connect tricorder.x-filter.net:${TRICORDER_SSL_PORT_NUMBER} 2> /dev/null)
     # Otherwise,
     else
         # use net cat
         log_write "${INFO} Using ${COL_YELLOW}netcat${COL_NC} for transmission."
         # Save the token returned by our server in a variable
-        tricorder_token=$(< ${PIHOLE_DEBUG_LOG_SANITIZED} nc tricorder.pi-hole.net ${TRICORDER_NC_PORT_NUMBER})
+        tricorder_token=$(< ${XFILTER_DEBUG_LOG_SANITIZED} nc tricorder.x-filter.net ${TRICORDER_NC_PORT_NUMBER})
     fi
 }
 
 
 upload_to_tricorder() {
-    local username="pihole"
+    local username="xfilter"
     # Set the permissions and owner
-    chmod 644 ${PIHOLE_DEBUG_LOG}
-    chown "$USER":"${username}" ${PIHOLE_DEBUG_LOG}
+    chmod 644 ${XFILTER_DEBUG_LOG}
+    chown "$USER":"${username}" ${XFILTER_DEBUG_LOG}
 
     # Let the user know debugging is complete with something strikingly visual
     log_write ""
@@ -1160,10 +1160,10 @@ upload_to_tricorder() {
     log_write "${TICK} ${COL_GREEN}** FINISHED DEBUGGING! **${COL_NC}\\n"
 
     # Provide information on what they should do with their token
-    log_write "    * The debug log can be uploaded to tricorder.pi-hole.net for sharing with developers only."
+    log_write "    * The debug log can be uploaded to tricorder.x-filter.net for sharing with developers only."
     log_write "    * For more information, see: ${TRICORDER_CONTEST}"
     log_write "    * If available, we'll use openssl to upload the log, otherwise it will fall back to netcat."
-    # If pihole -d is running automatically (usually throught the dashboard)
+    # If xfilter -d is running automatically (usually throught the dashboard)
     if [[ "${AUTOMATED}" ]]; then
         # let the user know
         log_write "${INFO} Debug script running in automated mode"
@@ -1182,11 +1182,11 @@ upload_to_tricorder() {
             *) log_write "    * Log will ${COL_GREEN}NOT${COL_NC} be uploaded to tricorder.";exit;
         esac
     fi
-    # Check if tricorder.pi-hole.net is reachable and provide token
+    # Check if tricorder.x-filter.net is reachable and provide token
     # along with some additional useful information
     if [[ -n "${tricorder_token}" ]]; then
         # Again, try to make this visually striking so the user realizes they need to do something with this information
-        # Namely, provide the Pi-hole devs with the token
+        # Namely, provide the X-filter devs with the token
         log_write ""
         log_write "${COL_PURPLE}***********************************${COL_NC}"
         log_write "${COL_PURPLE}***********************************${COL_NC}"
@@ -1194,17 +1194,17 @@ upload_to_tricorder() {
         log_write "${COL_PURPLE}***********************************${COL_NC}"
         log_write "${COL_PURPLE}***********************************${COL_NC}"
         log_write ""
-        log_write "   * Provide the token above to the Pi-hole team for assistance at"
+        log_write "   * Provide the token above to the X-filter team for assistance at"
         log_write "   * ${FORUMS_URL}"
         log_write "   * Your log will self-destruct on our server after ${COL_RED}48 hours${COL_NC}."
     # If no token was generated
     else
         # Show an error and some help instructions
         log_write "${CROSS}  ${COL_RED}There was an error uploading your debug log.${COL_NC}"
-        log_write "   * Please try again or contact the Pi-hole team for assistance."
+        log_write "   * Please try again or contact the X-filter team for assistance."
     fi
     # Finally, show where the log file is no matter the outcome of the function so users can look at it
-    log_write "   * A local copy of the debug log can be found at: ${COL_CYAN}${PIHOLE_DEBUG_LOG_SANITIZED}${COL_NC}\\n"
+    log_write "   * A local copy of the debug log can be found at: ${COL_CYAN}${XFILTER_DEBUG_LOG_SANITIZED}${COL_NC}\\n"
 }
 
 # Run through all the functions we made
@@ -1224,8 +1224,8 @@ process_status
 parse_setup_vars
 check_x_headers
 analyze_gravity_list
-show_content_of_pihole_files
+show_content_of_xfilter_files
 parse_locale
-analyze_pihole_log
+analyze_xfilter_log
 copy_to_debug_log
 upload_to_tricorder

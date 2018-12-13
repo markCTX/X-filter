@@ -1,55 +1,55 @@
-.TH "Pi-hole" "8" "Pi-hole" "Pi-hole" "May 2018"
+.TH "X-filter" "8" "X-filter" "X-filter" "May 2018"
 .SH "NAME"
 
-Pi-hole : A black-hole for internet advertisements
+X-filter : A black-hole for internet advertisements
 .br
 .SH "SYNOPSIS"
 
-\fBpihole\fR (\fB-w\fR|\fB-b\fR|\fB--wild\fR|\fB--regex\fR) [options] domain(s)
+\fBxfilter\fR (\fB-w\fR|\fB-b\fR|\fB--wild\fR|\fB--regex\fR) [options] domain(s)
 .br
-\fBpihole -a\fR \fB-p\fR password
+\fBxfilter -a\fR \fB-p\fR password
 .br
-\fBpihole -a\fR (\fB-c|-f|-k\fR)
+\fBxfilter -a\fR (\fB-c|-f|-k\fR)
 .br
-\fBpihole -a\fR [\fB-r\fR hostrecord]
+\fBxfilter -a\fR [\fB-r\fR hostrecord]
 .br
-\fBpihole -a -e\fR email
+\fBxfilter -a -e\fR email
 .br
-\fBpihole -a -i\fR interface
+\fBxfilter -a -i\fR interface
 .br
-\fBpihole -a -l\fR privacylevel
+\fBxfilter -a -l\fR privacylevel
 .br
-\fBpihole -c\fR [-j|-r|-e]
+\fBxfilter -c\fR [-j|-r|-e]
 .br
-\fBpihole\fR \fB-d\fR [-a]
+\fBxfilter\fR \fB-d\fR [-a]
 .br
-\fBpihole -f
+\fBxfilter -f
 .br
-pihole -r
+xfilter -r
 .br
-pihole -t
+xfilter -t
 .br
-pihole -g\fR
+xfilter -g\fR
 .br
-\fBpihole\fR -\fBq\fR [options]
+\fBxfilter\fR -\fBq\fR [options]
 .br
-\fBpihole\fR \fB-l\fR (\fBon|off|off noflush\fR)
+\fBxfilter\fR \fB-l\fR (\fBon|off|off noflush\fR)
 .br
-\fBpihole -up \fR[--checkonly]
+\fBxfilter -up \fR[--checkonly]
 .br
-\fBpihole -v\fR [-p|-a|-f] [-c|-l|-hash]
+\fBxfilter -v\fR [-p|-a|-f] [-c|-l|-hash]
 .br
-\fBpihole uninstall
+\fBxfilter uninstall
 .br
-pihole status
+xfilter status
 .br
-pihole restartdns\fR
+xfilter restartdns\fR
 .br
-\fBpihole\fR (\fBenable\fR|\fBdisable\fR [time])
+\fBxfilter\fR (\fBenable\fR|\fBdisable\fR [time])
 .br
-\fBpihole\fR \fBcheckout\fR repo [branch]
+\fBxfilter\fR \fBcheckout\fR repo [branch]
 .br
-\fBpihole\fR \fBhelp\fR
+\fBxfilter\fR \fBhelp\fR
 .br
 .SH "DESCRIPTION"
 
@@ -99,17 +99,17 @@ Available commands and options:
 
 \fB-f, flush\fR
 .br
-    Flush the Pi-hole log
+    Flush the X-filter log
 .br
 
 \fB-r, reconfigure\fR
 .br
-    Reconfigure or Repair Pi-hole subsystems
+    Reconfigure or Repair X-filter subsystems
 .br
 
 \fB-t, tail\fR
 .br
-    View the live output of the Pi-hole log
+    View the live output of the X-filter log
 .br
 
 \fB-a, admin\fR [options]
@@ -177,22 +177,22 @@ Available commands and options:
 
 \fB-l, logging\fR [on|off|off noflush]
 .br
-    Specify whether the Pi-hole log should be used
+    Specify whether the X-filter log should be used
 .br
 
 	(Logging options):
 .br
-      on                Enable the Pi-hole log at /var/log/pihole.log
+      on                Enable the X-filter log at /var/log/xfilter.log
 .br
-      off               Disable and flush the Pi-hole log at
-                        /var/log/pihole.log
+      off               Disable and flush the X-filter log at
+                        /var/log/xfilter.log
 .br
-      off noflush       Disable the Pi-hole log at /var/log/pihole.log
+      off noflush       Disable the X-filter log at /var/log/xfilter.log
 .br
 
-\fB-up, updatePihole\fR [--check-only]
+\fB-up, updateXfilter\fR [--check-only]
 .br
-    Update Pi-hole subsystems
+    Update X-filter subsystems
 .br
 
       --check-only      Exit script before update is performed.
@@ -200,13 +200,13 @@ Available commands and options:
 
 \fB-v, version\fR [repo] [options]
 .br
-    Show installed versions of Pi-hole, Web Interface &amp; FTL
+    Show installed versions of X-filter, Web Interface &amp; FTL
 .br
 
 .br
     (repo options):
 .br
-      -p, --pihole      Only retrieve info regarding Pi-hole repository
+      -p, --xfilter      Only retrieve info regarding X-filter repository
 .br
       -a, --admin       Only retrieve info regarding AdminLTE
                         repository
@@ -225,48 +225,48 @@ Available commands and options:
 
 \fBuninstall\fR
 .br
-    Uninstall Pi-hole from your system
+    Uninstall X-filter from your system
 .br
 
 \fBstatus\fR
 .br
-    Display the running status of Pi-hole subsystems
+    Display the running status of X-filter subsystems
 .br
 
 \fBenable\fR
 .br
-    Enable Pi-hole subsystems
+    Enable X-filter subsystems
 .br
 
 \fBdisable\fR [time]
 .br
-    Disable Pi-hole subsystems, optionally for a set duration
+    Disable X-filter subsystems, optionally for a set duration
 .br
 
     (time options):
 .br
-      #s                Disable Pi-hole functionality for # second(s)
+      #s                Disable X-filter functionality for # second(s)
 .br
-      #m                Disable Pi-hole functionality for # minute(s)
+      #m                Disable X-filter functionality for # minute(s)
 .br
 
 \fBrestartdns\fR
 .br
-    Restart Pi-hole subsystems
+    Restart X-filter subsystems
 .br
 
 \fBcheckout\fR [repo] [branch]
 .br
-    Switch Pi-hole subsystems to a different Github branch
+    Switch X-filter subsystems to a different Github branch
 .br
 
     (repo options):
 .br
-      core              Change the branch of Pi-hole's core subsystem
+      core              Change the branch of X-filter's core subsystem
 .br
       web               Change the branch of Admin Console subsystem
 .br
-      ftl               Change the branch of Pi-hole's FTL subsystem
+      ftl               Change the branch of X-filter's FTL subsystem
 .br
     (branch options):
 .br
@@ -285,23 +285,23 @@ Some usage examples
 Whitelist/blacklist manipulation
 .br
 
-\fBpihole -w iloveads.example.com\fR
+\fBxfilter -w iloveads.example.com\fR
 .br
     Adds "iloveads.example.com" to whitelist
 .br
 
-\fBpihole -b -d noads.example.com\fR
+\fBxfilter -b -d noads.example.com\fR
 .br
     Removes "noads.example.com" from blacklist
 .br
 
-\fBpihole --wild example.com\fR
+\fBxfilter --wild example.com\fR
 .br
     Adds example.com as a wildcard - would block all subdomains of
     example.com, including example.com itself.
 .br
 
-\fBpihole --regex "ad.*\\.example\\.com$"\fR
+\fBxfilter --regex "ad.*\\.example\\.com$"\fR
 .br
     Adds "ad.*\\.example\\.com$" to the regex blacklist.
     Would block all subdomains of example.com which start with "ad"
@@ -310,7 +310,7 @@ Whitelist/blacklist manipulation
 Changing the Web Interface password
 .br
 
-\fBpihole -a -p ExamplePassword\fR
+\fBxfilter -a -p ExamplePassword\fR
 .br
     Change the password to "ExamplePassword"
 .br
@@ -318,7 +318,7 @@ Changing the Web Interface password
 Updating lists from internet sources
 .br
 
-\fBpihole -g\fR
+\fBxfilter -g\fR
 .br
     Update the list of ad-serving domains
 .br
@@ -326,36 +326,36 @@ Updating lists from internet sources
 Displaying version information
 .br
 
-\fBpihole -v -a -c\fR
+\fBxfilter -v -a -c\fR
 .br
     Display the current version of AdminLTE
 .br
 
-Temporarily disabling Pi-hole
+Temporarily disabling X-filter
 .br
 
-\fBpihole disable 5m\fR
+\fBxfilter disable 5m\fR
 .br
-    Disable Pi-hole functionality for five minutes
-.br
-
-Switching Pi-hole subsystem branches
+    Disable X-filter functionality for five minutes
 .br
 
-\fBpihole checkout master\fR
+Switching X-filter subsystem branches
+.br
+
+\fBxfilter checkout master\fR
 .br
     Switch to master branch
 .br
 
-\fBpihole checkout core dev\fR
+\fBxfilter checkout core dev\fR
 .br
     Switch to core development branch
 .br
 .SH "SEE ALSO"
 
-\fBlighttpd\fR(8), \fBpihole-FTL\fR(8)
+\fBlighttpd\fR(8), \fBxfilter-FTL\fR(8)
 .br
 .SH "COLOPHON"
 
-Get sucked into the latest news and community activity by entering Pi-hole's orbit. Information about Pi-hole, and the latest version of the software can be found at https://pi-hole.net.
+Get sucked into the latest news and community activity by entering X-filter's orbit. Information about X-filter, and the latest version of the software can be found at https://x-filter.net.
 .br

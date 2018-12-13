@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Show version numbers
@@ -10,13 +10,13 @@
 
 # Variables
 DEFAULT="-1"
-COREGITDIR="/etc/.pihole/"
+COREGITDIR="/etc/.xfilter/"
 WEBGITDIR="/var/www/html/admin/"
 
 getLocalVersion() {
     # FTL requires a different method
     if [[ "$1" == "FTL" ]]; then
-        pihole-FTL version
+        xfilter-FTL version
         return 0
     fi
 
@@ -69,7 +69,7 @@ getRemoteHash(){
     local daemon="${1}"
     local branch="${2}"
 
-    hash=$(git ls-remote --heads "https://github.com/pi-hole/${daemon}" | \
+    hash=$(git ls-remote --heads "https://github.com/x-filter/${daemon}" | \
         awk -v bra="$branch" '$0~bra {print substr($0,0,8);exit}')
     if [[ -n "$hash" ]]; then
         echo "$hash"
@@ -85,7 +85,7 @@ getRemoteVersion(){
     local daemon="${1}"
     local version
 
-    version=$(curl --silent --fail "https://api.github.com/repos/pi-hole/${daemon}/releases/latest" | \
+    version=$(curl --silent --fail "https://api.github.com/repos/x-filter/${daemon}/releases/latest" | \
         awk -F: '$1 ~/tag_name/ { print $2 }' | \
         tr -cd '[[:alnum:]]._-')
     if [[ "${version}" =~ ^v ]]; then
@@ -98,7 +98,7 @@ getRemoteVersion(){
 }
 
 versionOutput() {
-    [[ "$1" == "pi-hole" ]] && GITDIR=$COREGITDIR
+    [[ "$1" == "x-filter" ]] && GITDIR=$COREGITDIR
     [[ "$1" == "AdminLTE" ]] && GITDIR=$WEBGITDIR
     [[ "$1" == "FTL" ]] && GITDIR="FTL"
 
@@ -131,23 +131,23 @@ versionOutput() {
 }
 
 errorOutput() {
-    echo "  Invalid Option! Try 'pihole -v --help' for more information."
+    echo "  Invalid Option! Try 'xfilter -v --help' for more information."
     exit 1
 }
 
 defaultOutput() {
-    versionOutput "pi-hole" "$@"
+    versionOutput "x-filter" "$@"
     versionOutput "AdminLTE" "$@"
     versionOutput "FTL" "$@"
 }
 
 helpFunc() {
-    echo "Usage: pihole -v [repo | option] [option]
-Example: 'pihole -v -p -l'
-Show Pi-hole, Admin Console & FTL versions
+    echo "Usage: xfilter -v [repo | option] [option]
+Example: 'xfilter -v -p -l'
+Show X-filter, Admin Console & FTL versions
 
 Repositories:
-  -p, --pihole         Only retrieve info regarding Pi-hole repository
+  -p, --xfilter         Only retrieve info regarding X-filter repository
   -a, --admin          Only retrieve info regarding AdminLTE repository
   -f, --ftl            Only retrieve info regarding FTL repository
 
@@ -160,7 +160,7 @@ Options:
 }
 
 case "${1}" in
-    "-p" | "--pihole"    ) shift; versionOutput "pi-hole" "$@";;
+    "-p" | "--xfilter"    ) shift; versionOutput "x-filter" "$@";;
     "-a" | "--admin"     ) shift; versionOutput "AdminLTE" "$@";;
     "-f" | "--ftl"       ) shift; versionOutput "FTL" "$@";;
     "-h" | "--help"      ) helpFunc;;

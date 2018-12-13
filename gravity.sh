@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090
 
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
-# Usage: "pihole -g"
+# Usage: "xfilter -g"
 # Compiles a list of ad-serving domains by downloading them from multiple sources
 #
 # This file is copyright under the latest version of the EUPL.
@@ -13,26 +13,26 @@
 
 export LC_ALL=C
 
-coltable="/opt/pihole/COL_TABLE"
+coltable="/opt/xfilter/COL_TABLE"
 source "${coltable}"
-regexconverter="/opt/pihole/wildcard_regex_converter.sh"
+regexconverter="/opt/xfilter/wildcard_regex_converter.sh"
 source "${regexconverter}"
 
-basename="pihole"
-PIHOLE_COMMAND="/usr/local/bin/${basename}"
+basename="xfilter"
+XFILTER_COMMAND="/usr/local/bin/${basename}"
 
-piholeDir="/etc/${basename}"
+xfilterDir="/etc/${basename}"
 
-adListFile="${piholeDir}/adlists.list"
-adListDefault="${piholeDir}/adlists.default"
+adListFile="${xfilterDir}/adlists.list"
+adListDefault="${xfilterDir}/adlists.default"
 
-whitelistFile="${piholeDir}/whitelist.txt"
-blacklistFile="${piholeDir}/blacklist.txt"
-regexFile="${piholeDir}/regex.list"
+whitelistFile="${xfilterDir}/whitelist.txt"
+blacklistFile="${xfilterDir}/blacklist.txt"
+regexFile="${xfilterDir}/regex.list"
 
-adList="${piholeDir}/gravity.list"
-blackList="${piholeDir}/black.list"
-localList="${piholeDir}/local.list"
+adList="${xfilterDir}/gravity.list"
+blackList="${xfilterDir}/black.list"
+localList="${xfilterDir}/local.list"
 VPNList="/etc/openvpn/ipp.txt"
 
 domainsExtension="domains"
@@ -44,12 +44,12 @@ preEventHorizon="list.preEventHorizon"
 
 skipDownload="false"
 
-resolver="pihole-FTL"
+resolver="xfilter-FTL"
 
 haveSourceUrls=true
 
 # Source setupVars from install script
-setupVars="${piholeDir}/setupVars.conf"
+setupVars="${xfilterDir}/setupVars.conf"
 if [[ -f "${setupVars}" ]];then
   source "${setupVars}"
 
@@ -59,47 +59,47 @@ if [[ -f "${setupVars}" ]];then
 
   # Determine if IPv4/6 addresses exist
   if [[ -z "${IPV4_ADDRESS}" ]] && [[ -z "${IPV6_ADDRESS}" ]]; then
-    echo -e "  ${COL_LIGHT_RED}No IP addresses found! Please run 'pihole -r' to reconfigure${COL_NC}"
+    echo -e "  ${COL_LIGHT_RED}No IP addresses found! Please run 'xfilter -r' to reconfigure${COL_NC}"
     exit 1
   fi
 else
   echo -e "  ${COL_LIGHT_RED}Installation Failure: ${setupVars} does not exist! ${COL_NC}
-  Please run 'pihole -r', and choose the 'reconfigure' option to fix."
+  Please run 'xfilter -r', and choose the 'reconfigure' option to fix."
   exit 1
 fi
 
-# Source pihole-FTL from install script
-pihole_FTL="${piholeDir}/pihole-FTL.conf"
-if [[ -f "${pihole_FTL}" ]]; then
-  source "${pihole_FTL}"
+# Source xfilter-FTL from install script
+xfilter_FTL="${xfilterDir}/xfilter-FTL.conf"
+if [[ -f "${xfilter_FTL}" ]]; then
+  source "${xfilter_FTL}"
 fi
 
 if [[ -z "${BLOCKINGMODE}" ]] ; then
   BLOCKINGMODE="NULL"
 fi
 
-# Determine if superseded pihole.conf exists
-if [[ -r "${piholeDir}/pihole.conf" ]]; then
-  echo -e "  ${COL_LIGHT_RED}Ignoring overrides specified within pihole.conf! ${COL_NC}"
+# Determine if superseded xfilter.conf exists
+if [[ -r "${xfilterDir}/xfilter.conf" ]]; then
+  echo -e "  ${COL_LIGHT_RED}Ignoring overrides specified within xfilter.conf! ${COL_NC}"
 fi
 
-# Determine if Pi-hole blocking is disabled
+# Determine if X-filter blocking is disabled
 # If this is the case, we want to update
 #  gravity.list.bck and black.list.bck instead of
 #  gravity.list and black.list
-detect_pihole_blocking_status() {
+detect_xfilter_blocking_status() {
   if [[ "${BLOCKING_ENABLED}" == false ]]; then
-    echo -e "  ${INFO} Pi-hole blocking is disabled"
+    echo -e "  ${INFO} X-filter blocking is disabled"
     adList="${adList}.bck"
     blackList="${blackList}.bck"
   else
-    echo -e "  ${INFO} Pi-hole blocking is enabled"
+    echo -e "  ${INFO} X-filter blocking is enabled"
   fi
 }
 
 # Determine if DNS resolution is available before proceeding
 gravity_CheckDNSResolutionAvailable() {
-  local lookupDomain="pi.hole"
+  local lookupDomain="x.filter"
 
   # Determine if $localList does not exist
   if [[ ! -e "${localList}" ]]; then
@@ -118,7 +118,7 @@ gravity_CheckDNSResolutionAvailable() {
     exit 1
   fi
 
-  # If the /etc/resolv.conf contains resolvers other than 127.0.0.1 then the local dnsmasq will not be queried and pi.hole is NXDOMAIN.
+  # If the /etc/resolv.conf contains resolvers other than 127.0.0.1 then the local dnsmasq will not be queried and x.filter is NXDOMAIN.
   # This means that even though name resolution is working, the getent hosts check fails and the holddown timer keeps ticking and eventualy fails
   # So we check the output of the last command and if it failed, attempt to use dig +short as a fallback
   if timeout 1 dig +short "${lookupDomain}" &> /dev/null; then
@@ -136,7 +136,7 @@ gravity_CheckDNSResolutionAvailable() {
     echo -e "  ${CROSS} DNS resolution is currently unavailable"
   else
     echo -e "  ${CROSS} DNS service is not running"
-    "${PIHOLE_COMMAND}" restartdns
+    "${XFILTER_COMMAND}" restartdns
   fi
 
   # Ensure DNS server is given time to be resolvable
@@ -202,7 +202,7 @@ gravity_SetDownloadOptions() {
     domain="${sourceDomains[$i]}"
 
     # Save the file as list.#.domain
-    saveLocation="${piholeDir}/list.${i}.${domain}.${domainsExtension}"
+    saveLocation="${xfilterDir}/list.${i}.${domain}.${domainsExtension}"
     activeDomains[$i]="${saveLocation}"
 
     # Default user-agent (for Cloudflare's Browser Integrity Check: https://support.cloudflare.com/hc/en-us/articles/200170086-What-does-the-Browser-Integrity-Check-do-)
@@ -257,19 +257,19 @@ gravity_DownloadBlocklistFromUrl() {
    esac
 
   if [[ "${blocked}" == true ]]; then
-    printf -v ip_addr "%s" "${PIHOLE_DNS_1%#*}"
-    if [[ ${PIHOLE_DNS_1} != *"#"* ]]; then
+    printf -v ip_addr "%s" "${XFILTER_DNS_1%#*}"
+    if [[ ${XFILTER_DNS_1} != *"#"* ]]; then
         port=53
     else
-        printf -v port "%s" "${PIHOLE_DNS_1#*#}"
+        printf -v port "%s" "${XFILTER_DNS_1#*#}"
     fi
     ip=$(dig "@${ip_addr}" -p "${port}" +short "${domain}")
     if [[ $(echo "${url}" | awk -F '://' '{print $1}') = "https" ]]; then
       port=443;
     else port=80
     fi
-    bad_list=$(pihole -q -adlist hosts-file.net | head -n1 | awk -F 'Match found in ' '{print $2}')
-    echo -e "${OVER}  ${CROSS} ${str} ${domain} is blocked by ${bad_list%:}. Using DNS on ${PIHOLE_DNS_1} to download ${url}";
+    bad_list=$(xfilter -q -adlist hosts-file.net | head -n1 | awk -F 'Match found in ' '{print $2}')
+    echo -e "${OVER}  ${CROSS} ${str} ${domain} is blocked by ${bad_list%:}. Using DNS on ${XFILTER_DNS_1} to download ${url}";
     echo -ne "  ${INFO} ${str} Pending..."
     cmd_ext="--resolve $domain:$port:$ip $cmd_ext"
   fi
@@ -330,7 +330,7 @@ gravity_ParseFileIntoDomains() {
   local source="${1}" destination="${2}" firstLine abpFilter
 
   # Determine if we are parsing a consolidated list
-  if [[ "${source}" == "${piholeDir}/${matterAndLight}" ]]; then
+  if [[ "${source}" == "${xfilterDir}/${matterAndLight}" ]]; then
     # Remove comments and print only the domain name
     # Most of the lists downloaded are already in hosts file format but the spacing/formating is not contigious
     # This helps with that and makes it easier to read
@@ -420,7 +420,7 @@ gravity_ParseFileIntoDomains() {
     output=$( { mv "${source}" "${destination}"; } 2>&1 )
 
     if [[ ! -e "${destination}" ]]; then
-      echo -e "\\n  ${CROSS} Unable to move tmp file to ${piholeDir}
+      echo -e "\\n  ${CROSS} Unable to move tmp file to ${xfilterDir}
     ${output}"
       gravity_Cleanup "error"
     fi
@@ -437,19 +437,19 @@ gravity_ConsolidateDownloadedBlocklists() {
   fi
 
   # Empty $matterAndLight if it already exists, otherwise, create it
-  : > "${piholeDir}/${matterAndLight}"
+  : > "${xfilterDir}/${matterAndLight}"
 
   # Loop through each *.domains file
   for i in "${activeDomains[@]}"; do
     # Determine if file has read permissions, as download might have failed
     if [[ -r "${i}" ]]; then
       # Remove windows CRs from file, convert list to lower case, and append into $matterAndLight
-      tr -d '\r' < "${i}" | tr '[:upper:]' '[:lower:]' >> "${piholeDir}/${matterAndLight}"
+      tr -d '\r' < "${i}" | tr '[:upper:]' '[:lower:]' >> "${xfilterDir}/${matterAndLight}"
 
       # Ensure that the first line of a new list is on a new line
-      lastLine=$(tail -1 "${piholeDir}/${matterAndLight}")
+      lastLine=$(tail -1 "${xfilterDir}/${matterAndLight}")
       if [[ "${#lastLine}" -gt 0 ]]; then
-        echo "" >> "${piholeDir}/${matterAndLight}"
+        echo "" >> "${xfilterDir}/${matterAndLight}"
       fi
     fi
   done
@@ -468,10 +468,10 @@ gravity_SortAndFilterConsolidatedList() {
   fi
 
   # Parse into hosts file
-  gravity_ParseFileIntoDomains "${piholeDir}/${matterAndLight}" "${piholeDir}/${parsedMatter}"
+  gravity_ParseFileIntoDomains "${xfilterDir}/${matterAndLight}" "${xfilterDir}/${parsedMatter}"
 
   # Format $parsedMatter line total as currency
-  num=$(printf "%'.0f" "$(wc -l < "${piholeDir}/${parsedMatter}")")
+  num=$(printf "%'.0f" "$(wc -l < "${xfilterDir}/${parsedMatter}")")
   if [[ "${haveSourceUrls}" == true ]]; then
     echo -e "${OVER}  ${TICK} ${str}"
   fi
@@ -482,12 +482,12 @@ gravity_SortAndFilterConsolidatedList() {
     echo -ne "  ${INFO} ${str}..."
   fi
 
-  sort -u "${piholeDir}/${parsedMatter}" > "${piholeDir}/${preEventHorizon}"
+  sort -u "${xfilterDir}/${parsedMatter}" > "${xfilterDir}/${preEventHorizon}"
 
   if [[ "${haveSourceUrls}" == true ]]; then
     echo -e "${OVER}  ${TICK} ${str}"
     # Format $preEventHorizon line total as currency
-    num=$(printf "%'.0f" "$(wc -l < "${piholeDir}/${preEventHorizon}")")
+    num=$(printf "%'.0f" "$(wc -l < "${xfilterDir}/${preEventHorizon}")")
     echo -e "  ${INFO} Number of unique domains trapped in the Event Horizon: ${COL_BLUE}${num}${COL_NC}"
   fi
 }
@@ -506,7 +506,7 @@ gravity_Whitelist() {
   echo -ne "  ${INFO} ${str}..."
 
   # Print everything from preEventHorizon into whitelistMatter EXCEPT domains in $whitelistFile
-  comm -23 "${piholeDir}/${preEventHorizon}" <(sort "${whitelistFile}") > "${piholeDir}/${whitelistMatter}"
+  comm -23 "${xfilterDir}/${preEventHorizon}" <(sort "${whitelistFile}") > "${xfilterDir}/${whitelistMatter}"
 
   echo -e "${OVER}  ${INFO} ${str}"
 }
@@ -555,7 +555,7 @@ gravity_ParseLocalDomains() {
     return 0
   fi
 
-  echo -e "${hostname}\\npi.hole" > "${localList}.tmp"
+  echo -e "${hostname}\\nx.filter" > "${localList}.tmp"
 
   # Empty $localList if it already exists, otherwise, create it
   : > "${localList}"
@@ -573,21 +573,21 @@ gravity_ParseBlacklistDomains() {
   local output status
 
   # Empty $accretionDisc if it already exists, otherwise, create it
-  : > "${piholeDir}/${accretionDisc}"
+  : > "${xfilterDir}/${accretionDisc}"
 
-  if [[ -f "${piholeDir}/${whitelistMatter}" ]]; then
-    mv "${piholeDir}/${whitelistMatter}" "${piholeDir}/${accretionDisc}"
+  if [[ -f "${xfilterDir}/${whitelistMatter}" ]]; then
+    mv "${xfilterDir}/${whitelistMatter}" "${xfilterDir}/${accretionDisc}"
   else
     # There was no whitelist file, so use preEventHorizon instead of whitelistMatter.
-    cp "${piholeDir}/${preEventHorizon}" "${piholeDir}/${accretionDisc}"
+    cp "${xfilterDir}/${preEventHorizon}" "${xfilterDir}/${accretionDisc}"
   fi
 
-  # Move the file over as /etc/pihole/gravity.list so dnsmasq can use it
-  output=$( { mv "${piholeDir}/${accretionDisc}" "${adList}"; } 2>&1 )
+  # Move the file over as /etc/xfilter/gravity.list so dnsmasq can use it
+  output=$( { mv "${xfilterDir}/${accretionDisc}" "${adList}"; } 2>&1 )
   status="$?"
 
   if [[ "${status}" -ne 0 ]]; then
-    echo -e "\\n  ${CROSS} Unable to move ${accretionDisc} from ${piholeDir}\\n  ${output}"
+    echo -e "\\n  ${CROSS} Unable to move ${accretionDisc} from ${xfilterDir}\\n  ${output}"
     gravity_Cleanup "error"
   fi
 }
@@ -597,9 +597,9 @@ gravity_ParseUserDomains() {
   if [[ ! -f "${blacklistFile}" ]]; then
     return 0
   fi
-  # Copy the file over as /etc/pihole/black.list so dnsmasq can use it
+  # Copy the file over as /etc/xfilter/black.list so dnsmasq can use it
   cp "${blacklistFile}" "${blackList}" 2> /dev/null || \
-    echo -e "\\n  ${CROSS} Unable to move ${blacklistFile##*/} to ${piholeDir}"
+    echo -e "\\n  ${CROSS} Unable to move ${blacklistFile##*/} to ${xfilterDir}"
 }
 
 # Trap Ctrl-C
@@ -615,14 +615,14 @@ gravity_Cleanup() {
   echo -ne "  ${INFO} ${str}..."
 
   # Delete tmp content generated by Gravity
-  rm ${piholeDir}/pihole.*.txt 2> /dev/null
-  rm ${piholeDir}/*.tmp 2> /dev/null
+  rm ${xfilterDir}/xfilter.*.txt 2> /dev/null
+  rm ${xfilterDir}/*.tmp 2> /dev/null
   rm /tmp/*.phgpb 2> /dev/null
 
   # Ensure this function only runs when gravity_SetDownloadOptions() has completed
   if [[ "${gravity_Blackbody:-}" == true ]]; then
     # Remove any unused .domains files
-    for file in ${piholeDir}/*.${domainsExtension}; do
+    for file in ${xfilterDir}/*.${domainsExtension}; do
       # If list is not in active array, then remove it
       if [[ ! "${activeDomains[*]}" == *"${file}"* ]]; then
         rm -f "${file}" 2> /dev/null || \
@@ -635,19 +635,19 @@ gravity_Cleanup() {
 
   # Only restart DNS service if offline
   if ! pidof ${resolver} &> /dev/null; then
-    "${PIHOLE_COMMAND}" restartdns
+    "${XFILTER_COMMAND}" restartdns
     dnsWasOffline=true
   fi
 
-  # Print Pi-hole status if an error occured
+  # Print X-filter status if an error occured
   if [[ -n "${error}" ]]; then
-    "${PIHOLE_COMMAND}" status
+    "${XFILTER_COMMAND}" status
     exit 1
   fi
 }
 
 helpFunc() {
-  echo "Usage: pihole -g
+  echo "Usage: xfilter -g
 Update domains from blocklists specified in adlists.list
 
 Options:
@@ -674,11 +674,11 @@ if [[ "${forceDelete:-}" == true ]]; then
   str="Deleting existing list cache"
   echo -ne "${INFO} ${str}..."
 
-  rm /etc/pihole/list.* 2> /dev/null || true
+  rm /etc/xfilter/list.* 2> /dev/null || true
   echo -e "${OVER}  ${TICK} ${str}"
 fi
 
-detect_pihole_blocking_status
+detect_xfilter_blocking_status
 
 # Determine which functions to run
 if [[ "${skipDownload}" == false ]]; then
@@ -693,7 +693,7 @@ if [[ "${skipDownload}" == false ]]; then
 else
   # Gravity needs to modify Blacklist/Whitelist/Wildcards
   echo -e "  ${INFO} Using cached Event Horizon list..."
-  numberOf=$(printf "%'.0f" "$(wc -l < "${piholeDir}/${preEventHorizon}")")
+  numberOf=$(printf "%'.0f" "$(wc -l < "${xfilterDir}/${preEventHorizon}")")
   echo -e "  ${INFO} ${COL_BLUE}${numberOf}${COL_NC} unique domains trapped in the Event Horizon"
 fi
 
@@ -728,6 +728,6 @@ echo ""
 # Determine if DNS has been restarted by this instance of gravity
 if [[ -z "${dnsWasOffline:-}" ]]; then
   # Use "force-reload" when restarting dnsmasq for everything but Wildcards
-  "${PIHOLE_COMMAND}" restartdns "${dnsRestartType:-force-reload}"
+  "${XFILTER_COMMAND}" restartdns "${dnsRestartType:-force-reload}"
 fi
-"${PIHOLE_COMMAND}" status
+"${XFILTER_COMMAND}" status

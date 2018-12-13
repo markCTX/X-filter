@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Whitelist and blacklist domains
@@ -9,12 +9,12 @@
 # Please see LICENSE file for your rights under this license.
 
 # Globals
-basename=pihole
-piholeDir=/etc/"${basename}"
-whitelist="${piholeDir}"/whitelist.txt
-blacklist="${piholeDir}"/blacklist.txt
+basename=xfilter
+xfilterDir=/etc/"${basename}"
+whitelist="${xfilterDir}"/whitelist.txt
+blacklist="${xfilterDir}"/blacklist.txt
 
-readonly regexlist="/etc/pihole/regex.list"
+readonly regexlist="/etc/xfilter/regex.list"
 reload=false
 addmode=true
 verbose=true
@@ -25,7 +25,7 @@ domList=()
 listMain=""
 listAlt=""
 
-colfile="/opt/pihole/COL_TABLE"
+colfile="/opt/xfilter/COL_TABLE"
 source ${colfile}
 
 
@@ -44,8 +44,8 @@ helpFunc() {
         type="black"
     fi
 
-    echo "Usage: pihole -${param} [options] <domain> <domain2 ...>
-Example: 'pihole -${param} site.com', or 'pihole -${param} site1.com site2.com'
+    echo "Usage: xfilter -${param} [options] <domain> <domain2 ...>
+Example: 'xfilter -${param} site.com', or 'xfilter -${param} site1.com site2.com'
 ${type^}list one or more domains
 
 Options:
@@ -213,7 +213,7 @@ RemoveDomain() {
 # Update Gravity
 Reload() {
     echo ""
-    pihole -g --skip-download "${type:-}"
+    xfilter -g --skip-download "${type:-}"
 }
 
 Displaylist() {

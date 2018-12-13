@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
-# Completely uninstalls Pi-hole
+# Completely uninstalls X-filter
 #
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
 
-source "/opt/pihole/COL_TABLE"
+source "/opt/xfilter/COL_TABLE"
 
 while true; do
-    read -rp "  ${QST} Are you sure you would like to remove ${COL_WHITE}Pi-hole${COL_NC}? [y/N] " yn
+    read -rp "  ${QST} Are you sure you would like to remove ${COL_WHITE}X-filter${COL_NC}? [y/N] " yn
     case ${yn} in
         [Yy]* ) break;;
         [Nn]* ) echo -e "${OVER}  ${COL_LIGHT_GREEN}Uninstall has been cancelled${COL_NC}"; exit 0;;
@@ -31,25 +31,25 @@ else
     else
         echo -e "  ${CROSS} ${str}
             Script called with non-root privileges
-            The Pi-hole requires elevated privleges to uninstall"
+            The X-filter requires elevated privleges to uninstall"
         exit 1
     fi
 fi
 
-readonly PI_HOLE_FILES_DIR="/etc/.pihole"
+readonly X_FILTER_FILES_DIR="/etc/.xfilter"
 PH_TEST="true"
-source "${PI_HOLE_FILES_DIR}/automated install/basic-install.sh"
+source "${X_FILTER_FILES_DIR}/automated install/basic-install.sh"
 # setupVars set in basic-install.sh
 source "${setupVars}"
 
 # distro_check() sourced from basic-install.sh
 distro_check
 
-# Install packages used by the Pi-hole
-DEPS=("${INSTALLER_DEPS[@]}" "${PIHOLE_DEPS[@]}")
+# Install packages used by the X-filter
+DEPS=("${INSTALLER_DEPS[@]}" "${XFILTER_DEPS[@]}")
 if [[ "${INSTALL_WEB_SERVER}" == true ]]; then
     # Install the Web dependencies
-    DEPS+=("${PIHOLE_WEB_DEPS[@]}")
+    DEPS+=("${XFILTER_WEB_DEPS[@]}")
 fi
 
 # Compatability
@@ -92,18 +92,18 @@ removeAndPurge() {
     done
 
     # Remove dnsmasq config files
-    ${SUDO} rm -f /etc/dnsmasq.conf /etc/dnsmasq.conf.orig /etc/dnsmasq.d/*-pihole*.conf &> /dev/null
+    ${SUDO} rm -f /etc/dnsmasq.conf /etc/dnsmasq.conf.orig /etc/dnsmasq.d/*-xfilter*.conf &> /dev/null
     echo -e "  ${TICK} Removing dnsmasq config files"
 
-    # Call removeNoPurge to remove Pi-hole specific files
+    # Call removeNoPurge to remove X-filter specific files
     removeNoPurge
 }
 
 removeNoPurge() {
-    # Only web directories/files that are created by Pi-hole should be removed
+    # Only web directories/files that are created by X-filter should be removed
     echo -ne "  ${INFO} Removing Web Interface..."
     ${SUDO} rm -rf /var/www/html/admin &> /dev/null
-    ${SUDO} rm -rf /var/www/html/pihole &> /dev/null
+    ${SUDO} rm -rf /var/www/html/xfilter &> /dev/null
     ${SUDO} rm -f /var/www/html/index.lighttpd.orig &> /dev/null
 
     # If the web directory is empty after removing these files, then the parent html directory can be removed.
@@ -116,19 +116,19 @@ removeNoPurge() {
  
     # Attempt to preserve backwards compatibility with older versions
     # to guarantee no additional changes were made to /etc/crontab after
-    # the installation of pihole, /etc/crontab.pihole should be permanently
+    # the installation of xfilter, /etc/crontab.xfilter should be permanently
     # preserved.
     if [[ -f /etc/crontab.orig ]]; then
-        ${SUDO} mv /etc/crontab /etc/crontab.pihole
+        ${SUDO} mv /etc/crontab /etc/crontab.xfilter
         ${SUDO} mv /etc/crontab.orig /etc/crontab
         ${SUDO} service cron restart
         echo -e "  ${TICK} Restored the default system cron"
     fi
 
     # Attempt to preserve backwards compatibility with older versions
-    if [[ -f /etc/cron.d/pihole ]];then
-        ${SUDO} rm -f /etc/cron.d/pihole &> /dev/null
-        echo -e "  ${TICK} Removed /etc/cron.d/pihole"
+    if [[ -f /etc/cron.d/xfilter ]];then
+        ${SUDO} rm -f /etc/cron.d/xfilter &> /dev/null
+        echo -e "  ${TICK} Removed /etc/cron.d/xfilter"
     fi
 
     package_check lighttpd > /dev/null
@@ -142,14 +142,14 @@ removeNoPurge() {
     fi
 
     ${SUDO} rm -f /etc/dnsmasq.d/adList.conf &> /dev/null
-    ${SUDO} rm -f /etc/dnsmasq.d/01-pihole.conf &> /dev/null
-    ${SUDO} rm -rf /var/log/*pihole* &> /dev/null
-    ${SUDO} rm -rf /etc/pihole/ &> /dev/null
-    ${SUDO} rm -rf /etc/.pihole/ &> /dev/null
-    ${SUDO} rm -rf /opt/pihole/ &> /dev/null
-    ${SUDO} rm -f /usr/local/bin/pihole &> /dev/null
-    ${SUDO} rm -f /etc/bash_completion.d/pihole &> /dev/null
-    ${SUDO} rm -f /etc/sudoers.d/pihole &> /dev/null
+    ${SUDO} rm -f /etc/dnsmasq.d/01-xfilter.conf &> /dev/null
+    ${SUDO} rm -rf /var/log/*xfilter* &> /dev/null
+    ${SUDO} rm -rf /etc/xfilter/ &> /dev/null
+    ${SUDO} rm -rf /etc/.xfilter/ &> /dev/null
+    ${SUDO} rm -rf /opt/xfilter/ &> /dev/null
+    ${SUDO} rm -f /usr/local/bin/xfilter &> /dev/null
+    ${SUDO} rm -f /etc/bash_completion.d/xfilter &> /dev/null
+    ${SUDO} rm -f /etc/sudoers.d/xfilter &> /dev/null
     echo -e "  ${TICK} Removed config files"
 
     # Restore Resolved
@@ -159,37 +159,37 @@ removeNoPurge() {
     fi
 
     # Remove FTL
-    if command -v pihole-FTL &> /dev/null; then
-        echo -ne "  ${INFO} Removing pihole-FTL..."
+    if command -v xfilter-FTL &> /dev/null; then
+        echo -ne "  ${INFO} Removing xfilter-FTL..."
         if [[ -x "$(command -v systemctl)" ]]; then
-            systemctl stop pihole-FTL
+            systemctl stop xfilter-FTL
         else
-            service pihole-FTL stop
+            service xfilter-FTL stop
         fi
-        ${SUDO} rm -f /etc/init.d/pihole-FTL
-        ${SUDO} rm -f /usr/bin/pihole-FTL
-        echo -e "${OVER}  ${TICK} Removed pihole-FTL"
+        ${SUDO} rm -f /etc/init.d/xfilter-FTL
+        ${SUDO} rm -f /usr/bin/xfilter-FTL
+        echo -e "${OVER}  ${TICK} Removed xfilter-FTL"
     fi
 
-    # If the pihole manpage exists, then delete and rebuild man-db
-    if [[ -f /usr/local/share/man/man8/pihole.8 ]]; then
-        ${SUDO} rm -f /usr/local/share/man/man8/pihole.8 /usr/local/share/man/man8/pihole-FTL.8 /usr/local/share/man/man5/pihole-FTL.conf.5
+    # If the xfilter manpage exists, then delete and rebuild man-db
+    if [[ -f /usr/local/share/man/man8/xfilter.8 ]]; then
+        ${SUDO} rm -f /usr/local/share/man/man8/xfilter.8 /usr/local/share/man/man8/xfilter-FTL.8 /usr/local/share/man/man5/xfilter-FTL.conf.5
         ${SUDO} mandb -q &>/dev/null
-        echo -e "  ${TICK} Removed pihole man page"
+        echo -e "  ${TICK} Removed xfilter man page"
     fi
 
-    # If the pihole user exists, then remove
-    if id "pihole" &> /dev/null; then
-        if ${SUDO} userdel -r pihole 2> /dev/null; then
-            echo -e "  ${TICK} Removed 'pihole' user"
+    # If the xfilter user exists, then remove
+    if id "xfilter" &> /dev/null; then
+        if ${SUDO} userdel -r xfilter 2> /dev/null; then
+            echo -e "  ${TICK} Removed 'xfilter' user"
         else
-            echo -e "  ${CROSS} Unable to remove 'pihole' user"
+            echo -e "  ${CROSS} Unable to remove 'xfilter' user"
         fi
     fi
 
-    echo -e "\\n   We're sorry to see you go, but thanks for checking out Pi-hole!
+    echo -e "\\n   We're sorry to see you go, but thanks for checking out X-filter!
        If you need help, reach out to us on Github, Discourse, Reddit or Twitter
-       Reinstall at any time: ${COL_WHITE}curl -sSL https://install.pi-hole.net | bash${COL_NC}
+       Reinstall at any time: ${COL_WHITE}curl -sSL https://install.x-filter.net | bash${COL_NC}
 
       ${COL_LIGHT_RED}Please reset the DNS on your router/clients to restore internet connectivity
       ${COL_LIGHT_GREEN}Uninstallation Complete! ${COL_NC}"
@@ -202,7 +202,7 @@ else
     echo -e "  ${INFO} Be sure to confirm if any dependencies should not be removed"
 fi
 while true; do
-    echo -e "  ${INFO} ${COL_YELLOW}The following dependencies may have been added by the Pi-hole install:"
+    echo -e "  ${INFO} ${COL_YELLOW}The following dependencies may have been added by the X-filter install:"
     echo -n "    "
     for i in "${DEPS[@]}"; do
         echo -n "${i} "

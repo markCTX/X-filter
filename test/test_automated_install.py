@@ -11,15 +11,15 @@ from conftest import (
 )
 
 
-def test_supported_operating_system(Pihole):
+def test_supported_operating_system(Xfilter):
     '''
     confirm installer exists on unsupported distribution
     '''
     # break supported package managers to emulate an unsupported distribution
-    Pihole.run('rm -rf /usr/bin/apt-get')
-    Pihole.run('rm -rf /usr/bin/rpm')
-    distro_check = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    Xfilter.run('rm -rf /usr/bin/apt-get')
+    Xfilter.run('rm -rf /usr/bin/rpm')
+    distro_check = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     distro_check
     ''')
     expected_stdout = cross_box + ' OS distribution not supported'
@@ -27,43 +27,43 @@ def test_supported_operating_system(Pihole):
     # assert distro_check.rc == 1
 
 
-def test_setupVars_are_sourced_to_global_scope(Pihole):
+def test_setupVars_are_sourced_to_global_scope(Xfilter):
     '''
     currently update_dialogs sources setupVars with a dot,
     then various other functions use the variables.
     This confirms the sourced variables are in scope between functions
     '''
-    setup_var_file = 'cat <<EOF> /etc/pihole/setupVars.conf\n'
+    setup_var_file = 'cat <<EOF> /etc/xfilter/setupVars.conf\n'
     for k, v in SETUPVARS.iteritems():
         setup_var_file += "{}={}\n".format(k, v)
     setup_var_file += "EOF\n"
-    Pihole.run(setup_var_file)
+    Xfilter.run(setup_var_file)
 
     script = dedent('''\
     set -e
     printSetupVars() {
         # Currently debug test function only
         echo "Outputting sourced variables"
-        echo "PIHOLE_INTERFACE=${PIHOLE_INTERFACE}"
+        echo "XFILTER_INTERFACE=${XFILTER_INTERFACE}"
         echo "IPV4_ADDRESS=${IPV4_ADDRESS}"
         echo "IPV6_ADDRESS=${IPV6_ADDRESS}"
-        echo "PIHOLE_DNS_1=${PIHOLE_DNS_1}"
-        echo "PIHOLE_DNS_2=${PIHOLE_DNS_2}"
+        echo "XFILTER_DNS_1=${XFILTER_DNS_1}"
+        echo "XFILTER_DNS_2=${XFILTER_DNS_2}"
     }
     update_dialogs() {
-        . /etc/pihole/setupVars.conf
+        . /etc/xfilter/setupVars.conf
     }
     update_dialogs
     printSetupVars
     ''')
 
-    output = run_script(Pihole, script).stdout
+    output = run_script(Xfilter, script).stdout
 
     for k, v in SETUPVARS.iteritems():
         assert "{}={}".format(k, v) in output
 
 
-def test_setupVars_saved_to_file(Pihole):
+def test_setupVars_saved_to_file(Xfilter):
     '''
     confirm saved settings are written to a file for future updates to re-use
     '''
@@ -71,42 +71,42 @@ def test_setupVars_saved_to_file(Pihole):
     set_setup_vars = '\n'
     for k, v in SETUPVARS.iteritems():
         set_setup_vars += "    {}={}\n".format(k, v)
-    Pihole.run(set_setup_vars).stdout
+    Xfilter.run(set_setup_vars).stdout
 
     script = dedent('''\
     set -e
     echo start
     TERM=xterm
-    source /opt/pihole/basic-install.sh
+    source /opt/xfilter/basic-install.sh
     {}
     mkdir -p /etc/dnsmasq.d
     version_check_dnsmasq
-    echo "" > /etc/pihole/pihole-FTL.conf
+    echo "" > /etc/xfilter/xfilter-FTL.conf
     finalExports
-    cat /etc/pihole/setupVars.conf
+    cat /etc/xfilter/setupVars.conf
     '''.format(set_setup_vars))
 
-    output = run_script(Pihole, script).stdout
+    output = run_script(Xfilter, script).stdout
 
     for k, v in SETUPVARS.iteritems():
         assert "{}={}".format(k, v) in output
 
 
-def test_configureFirewall_firewalld_running_no_errors(Pihole):
+def test_configureFirewall_firewalld_running_no_errors(Xfilter):
     '''
     confirms firewalld rules are applied when firewallD is running
     '''
     # firewallD returns 'running' as status
-    mock_command('firewall-cmd', {'*': ('running', 0)}, Pihole)
+    mock_command('firewall-cmd', {'*': ('running', 0)}, Xfilter)
     # Whiptail dialog returns Ok for user prompt
-    mock_command('whiptail', {'*': ('', 0)}, Pihole)
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', 0)}, Xfilter)
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
-    expected_stdout = 'Configuring FirewallD for httpd and pihole-FTL'
+    expected_stdout = 'Configuring FirewallD for httpd and xfilter-FTL'
     assert expected_stdout in configureFirewall.stdout
-    firewall_calls = Pihole.run('cat /var/log/firewall-cmd').stdout
+    firewall_calls = Xfilter.run('cat /var/log/firewall-cmd').stdout
     assert 'firewall-cmd --state' in firewall_calls
     assert ('firewall-cmd '
             '--permanent '
@@ -115,14 +115,14 @@ def test_configureFirewall_firewalld_running_no_errors(Pihole):
     assert 'firewall-cmd --reload' in firewall_calls
 
 
-def test_configureFirewall_firewalld_disabled_no_errors(Pihole):
+def test_configureFirewall_firewalld_disabled_no_errors(Xfilter):
     '''
     confirms firewalld rules are not applied when firewallD is not running
     '''
     # firewallD returns non-running status
-    mock_command('firewall-cmd', {'*': ('not running', '1')}, Pihole)
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('firewall-cmd', {'*': ('not running', '1')}, Xfilter)
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
     expected_stdout = ('No active firewall detected.. '
@@ -130,71 +130,71 @@ def test_configureFirewall_firewalld_disabled_no_errors(Pihole):
     assert expected_stdout in configureFirewall.stdout
 
 
-def test_configureFirewall_firewalld_enabled_declined_no_errors(Pihole):
+def test_configureFirewall_firewalld_enabled_declined_no_errors(Xfilter):
     '''
     confirms firewalld rules are not applied when firewallD is running, user
     declines ruleset
     '''
     # firewallD returns running status
-    mock_command('firewall-cmd', {'*': ('running', 0)}, Pihole)
+    mock_command('firewall-cmd', {'*': ('running', 0)}, Xfilter)
     # Whiptail dialog returns Cancel for user prompt
-    mock_command('whiptail', {'*': ('', 1)}, Pihole)
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', 1)}, Xfilter)
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
     expected_stdout = 'Not installing firewall rulesets.'
     assert expected_stdout in configureFirewall.stdout
 
 
-def test_configureFirewall_no_firewall(Pihole):
+def test_configureFirewall_no_firewall(Xfilter):
     ''' confirms firewall skipped no daemon is running '''
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
     expected_stdout = 'No active firewall detected'
     assert expected_stdout in configureFirewall.stdout
 
 
-def test_configureFirewall_IPTables_enabled_declined_no_errors(Pihole):
+def test_configureFirewall_IPTables_enabled_declined_no_errors(Xfilter):
     '''
     confirms IPTables rules are not applied when IPTables is running, user
     declines ruleset
     '''
     # iptables command exists
-    mock_command('iptables', {'*': ('', '0')}, Pihole)
+    mock_command('iptables', {'*': ('', '0')}, Xfilter)
     # modinfo returns always true (ip_tables module check)
-    mock_command('modinfo', {'*': ('', '0')}, Pihole)
+    mock_command('modinfo', {'*': ('', '0')}, Xfilter)
     # Whiptail dialog returns Cancel for user prompt
-    mock_command('whiptail', {'*': ('', '1')}, Pihole)
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', '1')}, Xfilter)
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
     expected_stdout = 'Not installing firewall rulesets.'
     assert expected_stdout in configureFirewall.stdout
 
 
-def test_configureFirewall_IPTables_enabled_rules_exist_no_errors(Pihole):
+def test_configureFirewall_IPTables_enabled_rules_exist_no_errors(Xfilter):
     '''
     confirms IPTables rules are not applied when IPTables is running and rules
     exist
     '''
     # iptables command exists and returns 0 on calls
     # (should return 0 on iptables -C)
-    mock_command('iptables', {'-S': ('-P INPUT DENY', '0')}, Pihole)
+    mock_command('iptables', {'-S': ('-P INPUT DENY', '0')}, Xfilter)
     # modinfo returns always true (ip_tables module check)
-    mock_command('modinfo', {'*': ('', '0')}, Pihole)
+    mock_command('modinfo', {'*': ('', '0')}, Xfilter)
     # Whiptail dialog returns Cancel for user prompt
-    mock_command('whiptail', {'*': ('', '0')}, Pihole)
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', '0')}, Xfilter)
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
     expected_stdout = 'Installing new IPTables firewall rulesets'
     assert expected_stdout in configureFirewall.stdout
-    firewall_calls = Pihole.run('cat /var/log/iptables').stdout
+    firewall_calls = Xfilter.run('cat /var/log/iptables').stdout
     # General call type occurances
     assert len(re.findall(r'iptables -S', firewall_calls)) == 1
     assert len(re.findall(r'iptables -C', firewall_calls)) == 4
@@ -207,7 +207,7 @@ def test_configureFirewall_IPTables_enabled_rules_exist_no_errors(Pihole):
     assert len(re.findall(r'tcp --dport 4711:4720', firewall_calls)) == 1
 
 
-def test_configureFirewall_IPTables_enabled_not_exist_no_errors(Pihole):
+def test_configureFirewall_IPTables_enabled_not_exist_no_errors(Xfilter):
     '''
     confirms IPTables rules are applied when IPTables is running and rules do
     not exist
@@ -229,19 +229,19 @@ def test_configureFirewall_IPTables_enabled_not_exist_no_errors(Pihole):
                 0
             )
         },
-        Pihole
+        Xfilter
     )
     # modinfo returns always true (ip_tables module check)
-    mock_command('modinfo', {'*': ('', '0')}, Pihole)
+    mock_command('modinfo', {'*': ('', '0')}, Xfilter)
     # Whiptail dialog returns Cancel for user prompt
-    mock_command('whiptail', {'*': ('', '0')}, Pihole)
-    configureFirewall = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', '0')}, Xfilter)
+    configureFirewall = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     configureFirewall
     ''')
     expected_stdout = 'Installing new IPTables firewall rulesets'
     assert expected_stdout in configureFirewall.stdout
-    firewall_calls = Pihole.run('cat /var/log/iptables').stdout
+    firewall_calls = Xfilter.run('cat /var/log/iptables').stdout
     # General call type occurances
     assert len(re.findall(r'iptables -S', firewall_calls)) == 1
     assert len(re.findall(r'iptables -C', firewall_calls)) == 4
@@ -254,16 +254,16 @@ def test_configureFirewall_IPTables_enabled_not_exist_no_errors(Pihole):
     assert len(re.findall(r'tcp --dport 4711:4720', firewall_calls)) == 2
 
 
-def test_selinux_enforcing_default_exit(Pihole):
+def test_selinux_enforcing_default_exit(Xfilter):
     '''
     confirms installer prompts to exit when SELinux is Enforcing by default
     '''
     # getenforce returns the running state of SELinux
-    mock_command('getenforce', {'*': ('Enforcing', '0')}, Pihole)
+    mock_command('getenforce', {'*': ('Enforcing', '0')}, Xfilter)
     # Whiptail dialog returns Cancel for user prompt
-    mock_command('whiptail', {'*': ('', '1')}, Pihole)
-    check_selinux = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', '1')}, Xfilter)
+    check_selinux = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     checkSelinux
     ''')
     expected_stdout = info_box + ' SELinux mode detected: Enforcing'
@@ -273,16 +273,16 @@ def test_selinux_enforcing_default_exit(Pihole):
     assert check_selinux.rc == 1
 
 
-def test_selinux_enforcing_continue(Pihole):
+def test_selinux_enforcing_continue(Xfilter):
     '''
     confirms installer prompts to continue with custom policy warning
     '''
     # getenforce returns the running state of SELinux
-    mock_command('getenforce', {'*': ('Enforcing', '0')}, Pihole)
+    mock_command('getenforce', {'*': ('Enforcing', '0')}, Xfilter)
     # Whiptail dialog returns Continue for user prompt
-    mock_command('whiptail', {'*': ('', '0')}, Pihole)
-    check_selinux = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('whiptail', {'*': ('', '0')}, Xfilter)
+    check_selinux = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     checkSelinux
     ''')
     expected_stdout = info_box + ' SELinux mode detected: Enforcing'
@@ -296,14 +296,14 @@ def test_selinux_enforcing_continue(Pihole):
     assert check_selinux.rc == 0
 
 
-def test_selinux_permissive(Pihole):
+def test_selinux_permissive(Xfilter):
     '''
     confirms installer continues when SELinux is Permissive
     '''
     # getenforce returns the running state of SELinux
-    mock_command('getenforce', {'*': ('Permissive', '0')}, Pihole)
-    check_selinux = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('getenforce', {'*': ('Permissive', '0')}, Xfilter)
+    check_selinux = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     checkSelinux
     ''')
     expected_stdout = info_box + ' SELinux mode detected: Permissive'
@@ -311,13 +311,13 @@ def test_selinux_permissive(Pihole):
     assert check_selinux.rc == 0
 
 
-def test_selinux_disabled(Pihole):
+def test_selinux_disabled(Xfilter):
     '''
     confirms installer continues when SELinux is Disabled
     '''
-    mock_command('getenforce', {'*': ('Disabled', '0')}, Pihole)
-    check_selinux = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('getenforce', {'*': ('Disabled', '0')}, Xfilter)
+    check_selinux = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     checkSelinux
     ''')
     expected_stdout = info_box + ' SELinux mode detected: Disabled'
@@ -325,13 +325,13 @@ def test_selinux_disabled(Pihole):
     assert check_selinux.rc == 0
 
 
-def test_installPiholeWeb_fresh_install_no_errors(Pihole):
+def test_installXfilterWeb_fresh_install_no_errors(Xfilter):
     '''
     confirms all web page assets from Core repo are installed on a fresh build
     '''
-    installWeb = Pihole.run('''
-    source /opt/pihole/basic-install.sh
-    installPiholeWeb
+    installWeb = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
+    installXfilterWeb
     ''')
     expected_stdout = info_box + ' Installing blocking page...'
     assert expected_stdout in installWeb.stdout
@@ -345,17 +345,17 @@ def test_installPiholeWeb_fresh_install_no_errors(Pihole):
     assert expected_stdout in installWeb.stdout
     expected_stdout = tick_box + ' Installing sudoer file'
     assert expected_stdout in installWeb.stdout
-    web_directory = Pihole.run('ls -r /var/www/html/pihole').stdout
+    web_directory = Xfilter.run('ls -r /var/www/html/xfilter').stdout
     assert 'index.php' in web_directory
     assert 'blockingpage.css' in web_directory
 
 
-def test_update_package_cache_success_no_errors(Pihole):
+def test_update_package_cache_success_no_errors(Xfilter):
     '''
     confirms package cache was updated without any errors
     '''
-    updateCache = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    updateCache = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     distro_check
     update_package_cache
     ''')
@@ -364,13 +364,13 @@ def test_update_package_cache_success_no_errors(Pihole):
     assert 'error' not in updateCache.stdout.lower()
 
 
-def test_update_package_cache_failure_no_errors(Pihole):
+def test_update_package_cache_failure_no_errors(Xfilter):
     '''
     confirms package cache was not updated
     '''
-    mock_command('apt-get', {'update': ('', '1')}, Pihole)
-    updateCache = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('apt-get', {'update': ('', '1')}, Xfilter)
+    updateCache = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     distro_check
     update_package_cache
     ''')
@@ -379,12 +379,12 @@ def test_update_package_cache_failure_no_errors(Pihole):
     assert 'Error: Unable to update package cache.' in updateCache.stdout
 
 
-def test_FTL_detect_aarch64_no_errors(Pihole):
+def test_FTL_detect_aarch64_no_errors(Xfilter):
     '''
     confirms only aarch64 package is downloaded for FTL engine
     '''
     # mock uname to return aarch64 platform
-    mock_command('uname', {'-m': ('aarch64', '0')}, Pihole)
+    mock_command('uname', {'-m': ('aarch64', '0')}, Xfilter)
     # mock ldd to respond with aarch64 shared library
     mock_command(
         'ldd',
@@ -394,10 +394,10 @@ def test_FTL_detect_aarch64_no_errors(Pihole):
                 '0'
             )
         },
-        Pihole
+        Xfilter
     )
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     FTLdetect
     ''')
     expected_stdout = info_box + ' FTL Checks...'
@@ -408,16 +408,16 @@ def test_FTL_detect_aarch64_no_errors(Pihole):
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_FTL_detect_armv6l_no_errors(Pihole):
+def test_FTL_detect_armv6l_no_errors(Xfilter):
     '''
     confirms only armv6l package is downloaded for FTL engine
     '''
     # mock uname to return armv6l platform
-    mock_command('uname', {'-m': ('armv6l', '0')}, Pihole)
+    mock_command('uname', {'-m': ('armv6l', '0')}, Xfilter)
     # mock ldd to respond with aarch64 shared library
-    mock_command('ldd', {'/bin/ls': ('/lib/ld-linux-armhf.so.3', '0')}, Pihole)
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('ldd', {'/bin/ls': ('/lib/ld-linux-armhf.so.3', '0')}, Xfilter)
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     FTLdetect
     ''')
     expected_stdout = info_box + ' FTL Checks...'
@@ -429,16 +429,16 @@ def test_FTL_detect_armv6l_no_errors(Pihole):
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_FTL_detect_armv7l_no_errors(Pihole):
+def test_FTL_detect_armv7l_no_errors(Xfilter):
     '''
     confirms only armv7l package is downloaded for FTL engine
     '''
     # mock uname to return armv7l platform
-    mock_command('uname', {'-m': ('armv7l', '0')}, Pihole)
+    mock_command('uname', {'-m': ('armv7l', '0')}, Xfilter)
     # mock ldd to respond with aarch64 shared library
-    mock_command('ldd', {'/bin/ls': ('/lib/ld-linux-armhf.so.3', '0')}, Pihole)
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('ldd', {'/bin/ls': ('/lib/ld-linux-armhf.so.3', '0')}, Xfilter)
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     FTLdetect
     ''')
     expected_stdout = info_box + ' FTL Checks...'
@@ -449,12 +449,12 @@ def test_FTL_detect_armv7l_no_errors(Pihole):
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_FTL_detect_x86_64_no_errors(Pihole):
+def test_FTL_detect_x86_64_no_errors(Xfilter):
     '''
     confirms only x86_64 package is downloaded for FTL engine
     '''
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     FTLdetect
     ''')
     expected_stdout = info_box + ' FTL Checks...'
@@ -465,80 +465,80 @@ def test_FTL_detect_x86_64_no_errors(Pihole):
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_FTL_detect_unknown_no_errors(Pihole):
+def test_FTL_detect_unknown_no_errors(Xfilter):
     ''' confirms only generic package is downloaded for FTL engine '''
     # mock uname to return generic platform
-    mock_command('uname', {'-m': ('mips', '0')}, Pihole)
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    mock_command('uname', {'-m': ('mips', '0')}, Xfilter)
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     FTLdetect
     ''')
     expected_stdout = 'Not able to detect architecture (unknown: mips)'
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_FTL_download_aarch64_no_errors(Pihole):
+def test_FTL_download_aarch64_no_errors(Xfilter):
     '''
     confirms only aarch64 package is downloaded for FTL engine
     '''
     # mock uname to return generic platform
-    download_binary = Pihole.run('''
-    source /opt/pihole/basic-install.sh
-    FTLinstall pihole-FTL-aarch64-linux-gnu
+    download_binary = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
+    FTLinstall xfilter-FTL-aarch64-linux-gnu
     ''')
     expected_stdout = tick_box + ' Downloading and Installing FTL'
     assert expected_stdout in download_binary.stdout
     assert 'error' not in download_binary.stdout.lower()
 
 
-def test_FTL_download_unknown_fails_no_errors(Pihole):
+def test_FTL_download_unknown_fails_no_errors(Xfilter):
     '''
     confirms unknown binary is not downloaded for FTL engine
     '''
     # mock uname to return generic platform
-    download_binary = Pihole.run('''
-    source /opt/pihole/basic-install.sh
-    FTLinstall pihole-FTL-mips
+    download_binary = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
+    FTLinstall xfilter-FTL-mips
     ''')
     expected_stdout = cross_box + ' Downloading and Installing FTL'
     assert expected_stdout in download_binary.stdout
-    error1 = 'Error: URL https://github.com/pi-hole/FTL/releases/download/'
+    error1 = 'Error: URL https://github.com/x-filter/FTL/releases/download/'
     assert error1 in download_binary.stdout
     error2 = 'not found'
     assert error2 in download_binary.stdout
 
 
-def test_FTL_binary_installed_and_responsive_no_errors(Pihole):
+def test_FTL_binary_installed_and_responsive_no_errors(Xfilter):
     '''
     confirms FTL binary is copied and functional in installed location
     '''
-    installed_binary = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    installed_binary = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     FTLdetect
-    pihole-FTL version
+    xfilter-FTL version
     ''')
     expected_stdout = 'v'
     assert expected_stdout in installed_binary.stdout
 
 
-# def test_FTL_support_files_installed(Pihole):
+# def test_FTL_support_files_installed(Xfilter):
 #     '''
 #     confirms FTL support files are installed
 #     '''
-#     support_files = Pihole.run('''
-#     source /opt/pihole/basic-install.sh
+#     support_files = Xfilter.run('''
+#     source /opt/xfilter/basic-install.sh
 #     FTLdetect
-#     stat -c '%a %n' /var/log/pihole-FTL.log
-#     stat -c '%a %n' /run/pihole-FTL.port
-#     stat -c '%a %n' /run/pihole-FTL.pid
+#     stat -c '%a %n' /var/log/xfilter-FTL.log
+#     stat -c '%a %n' /run/xfilter-FTL.port
+#     stat -c '%a %n' /run/xfilter-FTL.pid
 #     ls -lac /run
 #     ''')
-#     assert '644 /run/pihole-FTL.port' in support_files.stdout
-#     assert '644 /run/pihole-FTL.pid' in support_files.stdout
-#     assert '644 /var/log/pihole-FTL.log' in support_files.stdout
+#     assert '644 /run/xfilter-FTL.port' in support_files.stdout
+#     assert '644 /run/xfilter-FTL.pid' in support_files.stdout
+#     assert '644 /var/log/xfilter-FTL.log' in support_files.stdout
 
 
-def test_IPv6_only_link_local(Pihole):
+def test_IPv6_only_link_local(Xfilter):
     '''
     confirms IPv6 blocking is disabled for Link-local address
     '''
@@ -551,10 +551,10 @@ def test_IPv6_only_link_local(Pihole):
                 '0'
             )
         },
-        Pihole
+        Xfilter
     )
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     useIPv6dialog
     ''')
     expected_stdout = ('Unable to find IPv6 ULA/GUA address, '
@@ -562,7 +562,7 @@ def test_IPv6_only_link_local(Pihole):
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_IPv6_only_ULA(Pihole):
+def test_IPv6_only_ULA(Xfilter):
     '''
     confirms IPv6 blocking is enabled for ULA addresses
     '''
@@ -575,17 +575,17 @@ def test_IPv6_only_ULA(Pihole):
                 '0'
             )
         },
-        Pihole
+        Xfilter
     )
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     useIPv6dialog
     ''')
     expected_stdout = 'Found IPv6 ULA address, using it for blocking IPv6 ads'
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_IPv6_only_GUA(Pihole):
+def test_IPv6_only_GUA(Xfilter):
     '''
     confirms IPv6 blocking is enabled for GUA addresses
     '''
@@ -598,17 +598,17 @@ def test_IPv6_only_GUA(Pihole):
                 '0'
             )
         },
-        Pihole
+        Xfilter
     )
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     useIPv6dialog
     ''')
     expected_stdout = 'Found IPv6 GUA address, using it for blocking IPv6 ads'
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_IPv6_GUA_ULA_test(Pihole):
+def test_IPv6_GUA_ULA_test(Xfilter):
     '''
     confirms IPv6 blocking is enabled for GUA and ULA addresses
     '''
@@ -622,17 +622,17 @@ def test_IPv6_GUA_ULA_test(Pihole):
                 '0'
             )
         },
-        Pihole
+        Xfilter
     )
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     useIPv6dialog
     ''')
     expected_stdout = 'Found IPv6 ULA address, using it for blocking IPv6 ads'
     assert expected_stdout in detectPlatform.stdout
 
 
-def test_IPv6_ULA_GUA_test(Pihole):
+def test_IPv6_ULA_GUA_test(Xfilter):
     '''
     confirms IPv6 blocking is enabled for GUA and ULA addresses
     '''
@@ -646,10 +646,10 @@ def test_IPv6_ULA_GUA_test(Pihole):
                 '0'
             )
         },
-        Pihole
+        Xfilter
     )
-    detectPlatform = Pihole.run('''
-    source /opt/pihole/basic-install.sh
+    detectPlatform = Xfilter.run('''
+    source /opt/xfilter/basic-install.sh
     useIPv6dialog
     ''')
     expected_stdout = 'Found IPv6 ULA address, using it for blocking IPv6 ads'

@@ -7,12 +7,15 @@ check_output = testinfra.get_backend(
 ).get_module("Command").check_output
 
 SETUPVARS = {
-    'PIHOLE_INTERFACE': 'eth99',
+    'XFILTER_INTERFACE': 'eth99',
     'IPV4_ADDRESS': '1.1.1.1',
     'IPV6_ADDRESS': 'FE80::240:D0FF:FE48:4672',
-    'PIHOLE_DNS_1': '4.2.2.1',
-    'PIHOLE_DNS_2': '4.2.2.2'
+    'XFILTER_DNS_1': '4.2.2.1',
+    'XFILTER_DNS_2': '4.2.2.2'
 }
+'''
+4.2.2.1, and 4.2.2.2 are Century Link DNS servers
+'''
 
 tick_box = "[\x1b[1;32m\xe2\x9c\x93\x1b[0m]".decode("utf-8")
 cross_box = "[\x1b[1;31m\xe2\x9c\x97\x1b[0m]".decode("utf-8")
@@ -20,7 +23,7 @@ info_box = "[i]".decode("utf-8")
 
 
 @pytest.fixture
-def Pihole(Docker):
+def Xfilter(Docker):
     '''
     used to contain some script stubbing, now pretty much an alias.
     Also provides bash as the default run function shell
@@ -84,7 +87,7 @@ def image(request, tag):
     '''
     built by test_000_build_containers.py
     '''
-    return 'pytest_pihole:{}'.format(tag)
+    return 'pytest_xfilter:{}'.format(tag)
 
 
 @pytest.fixture()
@@ -150,7 +153,7 @@ def mock_command_2(script, args, container):
                                          scriptlog=script))
 
 
-def run_script(Pihole, script):
-    result = Pihole.run(script)
+def run_script(Xfilter, script):
+    result = Xfilter.run(script)
     assert result.rc == 0
     return result

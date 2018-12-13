@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Automatically configures the Pi to use the 2.8 LCD screen to display stats on it (also works over ssh)
@@ -58,11 +58,11 @@ adafruit-pitft-helper -t 28r
 
 # Download the cmdline.txt file that prevents the screen from going blank after a period of time
 mv /boot/cmdline.txt /boot/cmdline.orig
-curl -o /boot/cmdline.txt https://raw.githubusercontent.com/pi-hole/pi-hole/master/advanced/cmdline.txt
+curl -o /boot/cmdline.txt https://raw.githubusercontent.com/x-filter/x-filter/master/advanced/cmdline.txt
 
 # Back up the original file and download the new one
 mv /etc/default/console-setup /etc/default/console-setup.orig
-curl -o /etc/default/console-setup https://raw.githubusercontent.com/pi-hole/pi-hole/master/advanced/console-setup
+curl -o /etc/default/console-setup https://raw.githubusercontent.com/x-filter/x-filter/master/advanced/console-setup
 
 # Instantly apply the font change to the LCD screen
 setupcon

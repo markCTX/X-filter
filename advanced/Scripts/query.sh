@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2018 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2018 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Query Domain Lists
@@ -10,9 +10,9 @@
 # Please see LICENSE file for your rights under this license.
 
 # Globals
-piholeDir="/etc/pihole"
-adListsList="$piholeDir/adlists.list"
-wildcardlist="/etc/dnsmasq.d/03-pihole-wildcard.conf"
+xfilterDir="/etc/xfilter"
+adListsList="$xfilterDir/adlists.list"
+wildcardlist="/etc/dnsmasq.d/03-xfilter-wildcard.conf"
 options="$*"
 adlist=""
 all=""
@@ -20,7 +20,7 @@ exact=""
 blockpage=""
 matchType="match"
 
-colfile="/opt/pihole/COL_TABLE"
+colfile="/opt/xfilter/COL_TABLE"
 source "${colfile}"
 
 # Print each subdomain
@@ -46,7 +46,7 @@ scanList(){
     local domain="${1//./\\.}" lists="${2}" type="${3:-}"
 
     # Prevent grep from printing file path
-    cd "$piholeDir" || exit 1
+    cd "$xfilterDir" || exit 1
 
     # Prevent grep -i matching slowly: http://bit.ly/2xFXtUX
     export LC_CTYPE=C
@@ -61,8 +61,8 @@ scanList(){
 }
 
 if [[ "${options}" == "-h" ]] || [[ "${options}" == "--help" ]]; then
-    echo "Usage: pihole -q [option] <domain>
-Example: 'pihole -q -exact domain.com'
+    echo "Usage: xfilter -q [option] <domain>
+Example: 'xfilter -q -exact domain.com'
 Query the adlists for a specified domain
 
 Options:
@@ -103,7 +103,7 @@ case "${options}" in
 esac
 
 if [[ -n "${str:-}" ]]; then
-    echo -e "${str}${COL_NC}\\nTry 'pihole -q --help' for more information."
+    echo -e "${str}${COL_NC}\\nTry 'xfilter -q --help' for more information."
     exit 1
 fi
 
@@ -152,7 +152,7 @@ if [[ -e "${wildcardlist}" ]]; then
 fi
 
 # Get version sorted *.domains filenames (without dir path)
-lists=("$(cd "$piholeDir" || exit 0; printf "%s\\n" -- *.domains | sort -V)")
+lists=("$(cd "$xfilterDir" || exit 0; printf "%s\\n" -- *.domains | sort -V)")
 
 # Query blocklists for occurences of domain
 mapfile -t results <<< "$(scanList "${domainQuery}" "${lists[*]}" "${exact}")"

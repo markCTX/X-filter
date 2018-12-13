@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090
 
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Web interface settings
@@ -10,21 +10,21 @@
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
 
-readonly setupVars="/etc/pihole/setupVars.conf"
-readonly dnsmasqconfig="/etc/dnsmasq.d/01-pihole.conf"
-readonly dhcpconfig="/etc/dnsmasq.d/02-pihole-dhcp.conf"
-readonly FTLconf="/etc/pihole/pihole-FTL.conf"
+readonly setupVars="/etc/xfilter/setupVars.conf"
+readonly dnsmasqconfig="/etc/dnsmasq.d/01-xfilter.conf"
+readonly dhcpconfig="/etc/dnsmasq.d/02-xfilter-dhcp.conf"
+readonly FTLconf="/etc/xfilter/xfilter-FTL.conf"
 # 03 -> wildcards
-readonly dhcpstaticconfig="/etc/dnsmasq.d/04-pihole-static-dhcp.conf"
+readonly dhcpstaticconfig="/etc/dnsmasq.d/04-xfilter-static-dhcp.conf"
 
-coltable="/opt/pihole/COL_TABLE"
+coltable="/opt/xfilter/COL_TABLE"
 if [[ -f ${coltable} ]]; then
     source ${coltable}
 fi
 
 helpFunc() {
-    echo "Usage: pihole -a [options]
-Example: pihole -a -p password
+    echo "Usage: xfilter -a [options]
+Example: xfilter -a -p password
 Set options for the Admin Console
 
 Options:
@@ -142,7 +142,7 @@ ProcessDNSSettings() {
 
     COUNTER=1
     while [[ 1 ]]; do
-        var=PIHOLE_DNS_${COUNTER}
+        var=XFILTER_DNS_${COUNTER}
         if [ -z "${!var}" ]; then
             break;
         fi
@@ -154,7 +154,7 @@ ProcessDNSSettings() {
     # We apply it once more, and then convert it into the current format
     if [ ! -z "${LOCAL_DNS_PORT}" ]; then
         add_dnsmasq_setting "server" "127.0.0.1#${LOCAL_DNS_PORT}"
-        add_setting "PIHOLE_DNS_${COUNTER}" "127.0.0.1#${LOCAL_DNS_PORT}"
+        add_setting "XFILTER_DNS_${COUNTER}" "127.0.0.1#${LOCAL_DNS_PORT}"
         delete_setting "LOCAL_DNS_PORT"
     fi
 
@@ -199,11 +199,11 @@ trust-anchor=.,20326,8,2,E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC68345710423
     else
         # Listen only on one interface
         # Use eth0 as fallback interface if interface is missing in setupVars.conf
-        if [ -z "${PIHOLE_INTERFACE}" ]; then
-            PIHOLE_INTERFACE="eth0"
+        if [ -z "${XFILTER_INTERFACE}" ]; then
+            XFILTER_INTERFACE="eth0"
         fi
 
-        add_dnsmasq_setting "interface" "${PIHOLE_INTERFACE}"
+        add_dnsmasq_setting "interface" "${XFILTER_INTERFACE}"
     fi
 
     if [[ "${CONDITIONAL_FORWARDING}" == true ]]; then
@@ -214,11 +214,11 @@ trust-anchor=.,20326,8,2,E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC68345710423
 
 SetDNSServers() {
     # Save setting to file
-    delete_setting "PIHOLE_DNS"
+    delete_setting "XFILTER_DNS"
     IFS=',' read -r -a array <<< "${args[2]}"
     for index in "${!array[@]}"
     do
-        add_setting "PIHOLE_DNS_$((index+1))" "${array[index]}"
+        add_setting "XFILTER_DNS_$((index+1))" "${array[index]}"
     done
 
     if [[ "${args[3]}" == "domain-needed" ]]; then
@@ -274,7 +274,7 @@ Reboot() {
 }
 
 RestartDNS() {
-    /usr/local/bin/pihole restartdns
+    /usr/local/bin/xfilter restartdns
 }
 
 SetQueryLogOptions() {
@@ -285,16 +285,16 @@ ProcessDHCPSettings() {
     source "${setupVars}"
 
     if [[ "${DHCP_ACTIVE}" == "true" ]]; then
-    interface="${PIHOLE_INTERFACE}"
+    interface="${XFILTER_INTERFACE}"
 
     # Use eth0 as fallback interface
     if [ -z ${interface} ]; then
         interface="eth0"
     fi
 
-    if [[ "${PIHOLE_DOMAIN}" == "" ]]; then
-        PIHOLE_DOMAIN="lan"
-        change_setting "PIHOLE_DOMAIN" "${PIHOLE_DOMAIN}"
+    if [[ "${XFILTER_DOMAIN}" == "" ]]; then
+        XFILTER_DOMAIN="lan"
+        change_setting "XFILTER_DOMAIN" "${XFILTER_DOMAIN}"
     fi
 
     if [[ "${DHCP_LEASETIME}" == "0" ]]; then
@@ -313,18 +313,18 @@ ProcessDHCPSettings() {
 
     # Write settings to file
     echo "###############################################################################
-#  DHCP SERVER CONFIG FILE AUTOMATICALLY POPULATED BY PI-HOLE WEB INTERFACE.  #
+#  DHCP SERVER CONFIG FILE AUTOMATICALLY POPULATED BY X-FILTER WEB INTERFACE.  #
 #            ANY CHANGES MADE TO THIS FILE WILL BE LOST ON CHANGE             #
 ###############################################################################
 dhcp-authoritative
 dhcp-range=${DHCP_START},${DHCP_END},${leasetime}
 dhcp-option=option:router,${DHCP_ROUTER}
-dhcp-leasefile=/etc/pihole/dhcp.leases
+dhcp-leasefile=/etc/xfilter/dhcp.leases
 #quiet-dhcp
 " > "${dhcpconfig}"
 
-    if [[ "${PIHOLE_DOMAIN}" != "none" ]]; then
-        echo "domain=${PIHOLE_DOMAIN}" >> "${dhcpconfig}"
+    if [[ "${XFILTER_DOMAIN}" != "none" ]]; then
+        echo "domain=${XFILTER_DOMAIN}" >> "${dhcpconfig}"
     fi
 
     if [[ "${DHCP_IPv6}" == "true" ]]; then
@@ -349,7 +349,7 @@ EnableDHCP() {
     change_setting "DHCP_END" "${args[3]}"
     change_setting "DHCP_ROUTER" "${args[4]}"
     change_setting "DHCP_LEASETIME" "${args[5]}"
-    change_setting "PIHOLE_DOMAIN" "${args[6]}"
+    change_setting "XFILTER_DOMAIN" "${args[6]}"
     change_setting "DHCP_IPv6" "${args[7]}"
 
     # Remove possible old setting from file
@@ -378,7 +378,7 @@ SetWebUILayout() {
 }
 
 CustomizeAdLists() {
-    list="/etc/pihole/adlists.list"
+    list="/etc/xfilter/adlists.list"
 
     if [[ "${args[2]}" == "enable" ]]; then
         sed -i "\\@${args[3]}@s/^#http/http/g" "${list}"
@@ -440,8 +440,8 @@ RemoveDHCPStaticAddress() {
 
 SetHostRecord() {
     if [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-        echo "Usage: pihole -a hostrecord <domain> [IPv4-address],[IPv6-address]
-Example: 'pihole -a hostrecord home.domain.com 192.168.1.1,2001:db8:a0b:12f0::1'
+        echo "Usage: xfilter -a hostrecord <domain> [IPv4-address],[IPv6-address]
+Example: 'xfilter -a hostrecord home.domain.com 192.168.1.1,2001:db8:a0b:12f0::1'
 Add a name to the DNS associated to an IPv4/IPv6 address
 
 Options:
@@ -466,8 +466,8 @@ Options:
 
 SetAdminEmail() {
     if [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-        echo "Usage: pihole -a email <address>
-Example: 'pihole -a email admin@address.com'
+        echo "Usage: xfilter -a email <address>
+Example: 'xfilter -a email admin@address.com'
 Set an administrative contact address for the Block Page
 
 Options:
@@ -489,14 +489,14 @@ SetListeningMode() {
     source "${setupVars}"
 
     if [[ "$3" == "-h" ]] || [[ "$3" == "--help" ]]; then
-        echo "Usage: pihole -a -i [interface]
-Example: 'pihole -a -i local'
+        echo "Usage: xfilter -a -i [interface]
+Example: 'xfilter -a -i local'
 Specify dnsmasq's network interface listening behavior
 
 Interfaces:
   local               Listen on all interfaces, but only allow queries from
                       devices that are at most one hop away (local devices)
-  single              Listen only on ${PIHOLE_INTERFACE} interface
+  single              Listen only on ${XFILTER_INTERFACE} interface
   all                 Listen on all interfaces, permit all origins"
         exit 0
   fi
@@ -508,7 +508,7 @@ Interfaces:
         echo -e "  ${INFO} Listening on all interfaces, permiting origins from one hop away (LAN)"
         change_setting "DNSMASQ_LISTENING" "local"
     else
-        echo -e "  ${INFO} Listening only on interface ${PIHOLE_INTERFACE}"
+        echo -e "  ${INFO} Listening only on interface ${XFILTER_INTERFACE}"
         change_setting "DNSMASQ_LISTENING" "single"
     fi
 
@@ -523,7 +523,7 @@ Interfaces:
 
 Teleporter() {
     local datetimestamp=$(date "+%Y-%m-%d_%H-%M-%S")
-    php /var/www/html/admin/scripts/pi-hole/php/teleporter.php > "pi-hole-teleporter_${datetimestamp}.zip"
+    php /var/www/html/admin/scripts/x-filter/php/teleporter.php > "x-filter-teleporter_${datetimestamp}.zip"
 }
 
 addAudit()
@@ -532,13 +532,13 @@ addAudit()
     shift # skip "audit"
     for var in "$@"
     do
-        echo "${var}" >> /etc/pihole/auditlog.list
+        echo "${var}" >> /etc/xfilter/auditlog.list
     done
 }
 
 clearAudit()
 {
-    echo -n "" > /etc/pihole/auditlog.list
+    echo -n "" > /etc/xfilter/auditlog.list
 }
 
 SetPrivacyLevel() {

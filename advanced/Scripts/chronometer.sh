@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
 # Calculates stats and displays to an LCD
@@ -12,8 +12,8 @@ LC_ALL=C
 LC_NUMERIC=C
 
 # Retrieve stats from FTL engine
-pihole-FTL() {
-    ftl_port=$(cat /var/run/pihole-FTL.port 2> /dev/null)
+xfilter-FTL() {
+    ftl_port=$(cat /var/run/xfilter-FTL.port 2> /dev/null)
     if [[ -n "$ftl_port" ]]; then
         # Open connection to FTL
         exec 3<>"/dev/tcp/127.0.0.1/$ftl_port"
@@ -132,7 +132,7 @@ get_init_stats() {
     }
 
     # Set Colour Codes
-    coltable="/opt/pihole/COL_TABLE"
+    coltable="/opt/xfilter/COL_TABLE"
     if [[ -f "${coltable}" ]]; then
         source ${coltable}
     else
@@ -208,8 +208,8 @@ get_init_stats() {
     fi
 
     # Test existence of setupVars config
-    if [[ -f "/etc/pihole/setupVars.conf" ]]; then
-        setupVars="/etc/pihole/setupVars.conf"
+    if [[ -f "/etc/xfilter/setupVars.conf" ]]; then
+        setupVars="/etc/xfilter/setupVars.conf"
     fi
 }
 
@@ -225,7 +225,7 @@ get_sys_stats() {
         # Do not source setupVars if file does not exist
         [[ -n "$setupVars" ]] && source "$setupVars"
 
-        mapfile -t ph_ver_raw < <(pihole -v -c 2> /dev/null | sed -n 's/^.* v/v/p')
+        mapfile -t ph_ver_raw < <(xfilter -v -c 2> /dev/null | sed -n 's/^.* v/v/p')
         if [[ -n "${ph_ver_raw[0]}" ]]; then
             ph_core_ver="${ph_ver_raw[0]}"
             ph_lte_ver="${ph_ver_raw[1]}"
@@ -253,15 +253,15 @@ get_sys_stats() {
 
         # Get DNS server count
         dns_count="0"
-        [[ -n "${PIHOLE_DNS_1}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_2}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_3}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_4}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_5}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_6}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_7}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_8}" ]] && dns_count=$((dns_count+1))
-        [[ -n "${PIHOLE_DNS_9}" ]] && dns_count="$dns_count+"
+        [[ -n "${XFILTER_DNS_1}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_2}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_3}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_4}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_5}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_6}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_7}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_8}" ]] && dns_count=$((dns_count+1))
+        [[ -n "${XFILTER_DNS_9}" ]] && dns_count="$dns_count+"
     fi
 
     # Get screen size
@@ -349,7 +349,7 @@ get_sys_stats() {
     ram_used="${ram_raw[1]}"
     ram_total="${ram_raw[2]}"
 
-    if [[ "$(pihole status web 2> /dev/null)" == "1" ]]; then
+    if [[ "$(xfilter status web 2> /dev/null)" == "1" ]]; then
         ph_status="${COL_LIGHT_GREEN}Active"
     else
         ph_status="${COL_LIGHT_RED}Offline"
@@ -361,7 +361,7 @@ get_sys_stats() {
         ph_dhcp_range=$(seq -s "|" -f "${DHCP_START%.*}.%g" "${DHCP_START##*.}" "${DHCP_END##*.}")
 
         # Count dynamic leases from available range, and not static leases
-        ph_dhcp_num=$(grep -cE "$ph_dhcp_range" "/etc/pihole/dhcp.leases")
+        ph_dhcp_num=$(grep -cE "$ph_dhcp_range" "/etc/xfilter/dhcp.leases")
         ph_dhcp_percent=$(( ph_dhcp_num * 100 / ph_dhcp_max ))
     fi
 }
@@ -369,7 +369,7 @@ get_sys_stats() {
 get_ftl_stats() {
     local stats_raw
 
-    mapfile -t stats_raw < <(pihole-FTL "stats")
+    mapfile -t stats_raw < <(xfilter-FTL "stats")
     domains_being_blocked_raw="${stats_raw[0]#* }"
     dns_queries_today_raw="${stats_raw[1]#* }"
     ads_blocked_today_raw="${stats_raw[2]#* }"
@@ -388,10 +388,10 @@ get_ftl_stats() {
         ads_blocked_today=$(printf "%.0f\\n" "${ads_blocked_today_raw}")
         ads_percentage_today=$(printf "%'.0f\\n" "${ads_percentage_today_raw}")
         queries_cached_percentage=$(printf "%.0f\\n" "$(calcFunc "$queries_cached_raw * 100 / ( $queries_forwarded_raw + $queries_cached_raw )")")
-        recent_blocked=$(pihole-FTL recentBlocked)
-        read -r -a top_ad_raw <<< "$(pihole-FTL "top-ads (1)")"
-        read -r -a top_domain_raw <<< "$(pihole-FTL "top-domains (1)")"
-        read -r -a top_client_raw <<< "$(pihole-FTL "top-clients (1)")"
+        recent_blocked=$(xfilter-FTL recentBlocked)
+        read -r -a top_ad_raw <<< "$(xfilter-FTL "top-ads (1)")"
+        read -r -a top_domain_raw <<< "$(xfilter-FTL "top-domains (1)")"
+        read -r -a top_client_raw <<< "$(xfilter-FTL "top-clients (1)")"
 
         top_ad="${top_ad_raw[2]}"
         top_domain="${top_domain_raw[2]}"
@@ -474,7 +474,7 @@ chronoFunc() {
 
         # Remove exit message heading on third refresh
         if [[ "$count" -le 2 ]] && [[ "$*" != *"-e"* ]]; then
-            echo -e " ${COL_LIGHT_GREEN}Pi-hole Chronometer${COL_NC}
+            echo -e " ${COL_LIGHT_GREEN}X-filter Chronometer${COL_NC}
             $num_str
             ${COL_LIGHT_RED}Press Ctrl-C to exit${COL_NC}
             ${COL_DARK_GRAY}$scr_line_str${COL_NC}"
@@ -497,7 +497,7 @@ chronoFunc() {
             printFunc "DHCP usage: " "$ph_dhcp_percent%" "$dhcp_info"
         fi
 
-        printFunc "   Pi-hole: " "$ph_status" "$ph_info"
+        printFunc "   X-filter: " "$ph_status" "$ph_info"
         printFunc " Ads Today: " "$ads_percentage_today%" "$ads_info"
         printFunc "Local Qrys: " "$queries_cached_percentage%" "$dns_info"
 
@@ -541,10 +541,10 @@ jsonFunc() {
 
 helpFunc() {
     if [[ "$1" == "?" ]]; then
-        echo "Unknown option. Please view 'pihole -c --help' for more information"
+        echo "Unknown option. Please view 'xfilter -c --help' for more information"
     else
-        echo "Usage: pihole -c [options]
-Example: 'pihole -c -j'
+        echo "Usage: xfilter -c [options]
+Example: 'xfilter -c -j'
 Calculates stats and displays to an LCD
 
 Options:

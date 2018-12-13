@@ -1,11 +1,11 @@
 FROM centos:7
 
-ENV GITDIR /etc/.pihole
-ENV SCRIPTDIR /opt/pihole
+ENV GITDIR /etc/.xfilter
+ENV SCRIPTDIR /opt/xfilter
 
-RUN mkdir -p $GITDIR $SCRIPTDIR /etc/pihole
+RUN mkdir -p $GITDIR $SCRIPTDIR /etc/xfilter
 ADD . $GITDIR
-RUN cp $GITDIR/advanced/Scripts/*.sh $GITDIR/gravity.sh $GITDIR/pihole $GITDIR/automated\ install/*.sh $SCRIPTDIR/
+RUN cp $GITDIR/advanced/Scripts/*.sh $GITDIR/gravity.sh $GITDIR/xfilter $GITDIR/automated\ install/*.sh $SCRIPTDIR/
 ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$SCRIPTDIR
 
 RUN true && \
@@ -13,4 +13,4 @@ RUN true && \
 
 ENV PH_TEST true
 
-#sed '/# Start the installer/Q' /opt/pihole/basic-install.sh > /opt/pihole/stub_basic-install.sh && \
+#sed '/# Start the installer/Q' /opt/xfilter/basic-install.sh > /opt/xfilter/stub_basic-install.sh && \

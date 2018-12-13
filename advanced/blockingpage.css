@@ -1,5 +1,5 @@
-/* Pi-hole: A black hole for Internet advertisements
-*  (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+/* X-filter: A black hole for Internet advertisements
+*  (c) 2017 X-filter, LLC (https://x-filter.net)
 *  Network-wide ad blocking via your own hardware.
 *
 *  This file is copyright under the latest version of the EUPL.
@@ -8,20 +8,20 @@
 /* Text Customisation Options ======> */
 .title:before { content: "Website Blocked"; }
 .altBtn:before { content: "Why am I here?"; }
-.linkPH:before { content: "About Pi-hole"; }
+.linkPH:before { content: "About X-filter"; }
 .linkEmail:before { content: "Contact Admin"; }
 
 #bpOutput.add:before { content: "Info"; }
 #bpOutput.add:after { content: "The domain is being whitelisted..."; }
 #bpOutput.error:before, .unhandled:before { content: "Error"; }
-#bpOutput.unhandled:after { content: "An unhandled exception occured. This may happen when your browser is unable to load jQuery, or when the webserver is denying access to the Pi-hole API."; }
+#bpOutput.unhandled:after { content: "An unhandled exception occured. This may happen when your browser is unable to load jQuery, or when the webserver is denying access to the X-filter API."; }
 #bpOutput.success:before { content: "Success"; }
 #bpOutput.success:after { content: "Website has been whitelisted! You may need to flush your DNS cache"; }
 
 .recentwl:before { content: "This site has been whitelisted. Please flush your DNS cache and/or restart your browser."; }
-.unknown:before { content: "This website is not found in any of Pi-hole's blacklists. The reason you have arrived here is unknown."; }
+.unknown:before { content: "This website is not found in any of X-filter's blacklists. The reason you have arrived here is unknown."; }
 .cname:before { content: "This site is an alias for "; } /* <a href="http://cname.com">cname.com</a> */
-.cname:after { content: ", which may be blocked by Pi-hole."; }
+.cname:after { content: ", which may be blocked by X-filter."; }
 
 .blacklist:before { content: "Manually Blacklisted"; }
 .wildcard:before { content: "Manually Blacklisted by Wildcard"; }
@@ -32,7 +32,7 @@
 
 #bpHelpTxt:before { content: "If you have an ongoing use for this website, please "; }
 #bpHelpTxt a:before, #bpHelpTxt span:before { content: "ask the administrator"; }
-#bpHelpTxt:after{ content: " of the Pi-hole on this network to have it whitelisted"; }
+#bpHelpTxt:after{ content: " of the X-filter on this network to have it whitelisted"; }
 
 #bpBack:before { content: "Back to safety"; }
 #bpInfo:before { content: "Technical Info"; }
@@ -137,7 +137,7 @@ body {
   line-height: 2.2rem;
 }
 
-/* User is greeted with a splash page when browsing to Pi-hole IP address */
+/* User is greeted with a splash page when browsing to X-filter IP address */
 #splashpage { background: #222; color: rgba(255,255,255,0.7); text-align: center; }
 #splashpage img { margin: 5px; width: 256px; }
 #splashpage b { color: inherit; }

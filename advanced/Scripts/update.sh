@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
-# Check Pi-hole core and admin pages versions and determine what
+# Check X-filter core and admin pages versions and determine what
 # upgrade (if any) is required. Automatically updates and reinstalls
 # application if update is detected.
 #
@@ -11,10 +11,10 @@
 # Please see LICENSE file for your rights under this license.
 
 # Variables
-readonly ADMIN_INTERFACE_GIT_URL="https://github.com/pi-hole/AdminLTE.git"
+readonly ADMIN_INTERFACE_GIT_URL="https://github.com/x-filter/AdminLTE.git"
 readonly ADMIN_INTERFACE_DIR="/var/www/html/admin"
-readonly PI_HOLE_GIT_URL="https://github.com/pi-hole/pi-hole.git"
-readonly PI_HOLE_FILES_DIR="/etc/.pihole"
+readonly X_FILTER_GIT_URL="https://github.com/x-filter/x-filter.git"
+readonly X_FILTER_FILES_DIR="/etc/.xfilter"
 
 # shellcheck disable=SC2034
 PH_TEST=true
@@ -23,9 +23,9 @@ PH_TEST=true
 CHECK_ONLY=false
 
 # shellcheck disable=SC1090
-source "${PI_HOLE_FILES_DIR}/automated install/basic-install.sh"
+source "${X_FILTER_FILES_DIR}/automated install/basic-install.sh"
 # shellcheck disable=SC1091
-source "/opt/pihole/COL_TABLE"
+source "/opt/xfilter/COL_TABLE"
 
 # is_repo() sourced from basic-install.sh
 # make_repo() sourced from basic-install.sh
@@ -57,13 +57,13 @@ GitCheckUpdateAvail() {
     REMOTE="$(git rev-parse "@{upstream}")"
 
     if [[ "${#LOCAL}" == 0 ]]; then
-        echo -e "\\n  ${COL_LIGHT_RED}Error: Local revision could not be obtained, please contact Pi-hole Support"
+        echo -e "\\n  ${COL_LIGHT_RED}Error: Local revision could not be obtained, please contact X-filter Support"
         echo -e "  Additional debugging output:${COL_NC}"
         git status
         exit
     fi
     if [[ "${#REMOTE}" == 0 ]]; then
-        echo -e "\\n  ${COL_LIGHT_RED}Error: Remote revision could not be obtained, please contact Pi-hole Support"
+        echo -e "\\n  ${COL_LIGHT_RED}Error: Remote revision could not be obtained, please contact X-filter Support"
         echo -e "  Additional debugging output:${COL_NC}"
         git status
         exit
@@ -84,7 +84,7 @@ GitCheckUpdateAvail() {
 }
 
 main() {
-    local basicError="\\n  ${COL_LIGHT_RED}Unable to complete update, please contact Pi-hole Support${COL_NC}"
+    local basicError="\\n  ${COL_LIGHT_RED}Unable to complete update, please contact X-filter Support${COL_NC}"
     local core_update
     local web_update
     local FTL_update
@@ -97,26 +97,26 @@ main() {
     source "${setupVars}"
 
     # This is unlikely
-    if ! is_repo "${PI_HOLE_FILES_DIR}" ; then
-        echo -e "\\n  ${COL_LIGHT_RED}Error: Core Pi-hole repo is missing from system!"
-        echo -e "  Please re-run install script from https://pi-hole.net${COL_NC}"
+    if ! is_repo "${X_FILTER_FILES_DIR}" ; then
+        echo -e "\\n  ${COL_LIGHT_RED}Error: Core X-filter repo is missing from system!"
+        echo -e "  Please re-run install script from https://x-filter.net${COL_NC}"
         exit 1;
     fi
 
     echo -e "  ${INFO} Checking for updates..."
 
-    if GitCheckUpdateAvail "${PI_HOLE_FILES_DIR}" ; then
+    if GitCheckUpdateAvail "${X_FILTER_FILES_DIR}" ; then
         core_update=true
-        echo -e "  ${INFO} Pi-hole Core:\\t${COL_YELLOW}update available${COL_NC}"
+        echo -e "  ${INFO} X-filter Core:\\t${COL_YELLOW}update available${COL_NC}"
     else
         core_update=false
-        echo -e "  ${INFO} Pi-hole Core:\\t${COL_LIGHT_GREEN}up to date${COL_NC}"
+        echo -e "  ${INFO} X-filter Core:\\t${COL_LIGHT_GREEN}up to date${COL_NC}"
     fi
 
     if [[ "${INSTALL_WEB_INTERFACE}" == true ]]; then
         if ! is_repo "${ADMIN_INTERFACE_DIR}" ; then
             echo -e "\\n  ${COL_LIGHT_RED}Error: Web Admin repo is missing from system!"
-            echo -e "  Please re-run install script from https://pi-hole.net${COL_NC}"
+            echo -e "  Please re-run install script from https://x-filter.net${COL_NC}"
             exit 1;
         fi
 
@@ -138,7 +138,7 @@ main() {
                 echo -e "  ${INFO} FTL:\\t\\t${COL_LIGHT_GREEN}up to date${COL_NC}"
                 ;;
             2)
-                echo -e "  ${INFO} FTL:\\t\\t${COL_LIGHT_RED}Branch is not available.${COL_NC}\\n\\t\\t\\tUse ${COL_LIGHT_GREEN}pihole checkout ftl [branchname]${COL_NC} to switch to a valid branch."
+                echo -e "  ${INFO} FTL:\\t\\t${COL_LIGHT_RED}Branch is not available.${COL_NC}\\n\\t\\t\\tUse ${COL_LIGHT_GREEN}xfilter checkout ftl [branchname]${COL_NC} to switch to a valid branch."
                 ;;
             *)
                 echo -e "  ${INFO} FTL:\\t\\t${COL_LIGHT_RED}Something has gone wrong, contact support${COL_NC}"
@@ -159,14 +159,14 @@ main() {
 
     if [[ "${core_update}" == true ]]; then
         echo ""
-        echo -e "  ${INFO} Pi-hole core files out of date, updating local repo."
-        getGitFiles "${PI_HOLE_FILES_DIR}" "${PI_HOLE_GIT_URL}"
-        echo -e "  ${INFO} If you had made any changes in '/etc/.pihole/', they have been stashed using 'git stash'"
+        echo -e "  ${INFO} X-filter core files out of date, updating local repo."
+        getGitFiles "${X_FILTER_FILES_DIR}" "${X_FILTER_GIT_URL}"
+        echo -e "  ${INFO} If you had made any changes in '/etc/.xfilter/', they have been stashed using 'git stash'"
     fi
 
     if [[ "${web_update}" == true ]]; then
         echo ""
-        echo -e "  ${INFO} Pi-hole Web Admin files out of date, updating local repo."
+        echo -e "  ${INFO} X-filter Web Admin files out of date, updating local repo."
         getGitFiles "${ADMIN_INTERFACE_DIR}" "${ADMIN_INTERFACE_GIT_URL}"
         echo -e "  ${INFO} If you had made any changes in '/var/www/html/admin/', they have been stashed using 'git stash'"
     fi
@@ -177,7 +177,7 @@ main() {
     fi
 
     if [[ "${FTL_update}" == true || "${core_update}" == true ]]; then
-        ${PI_HOLE_FILES_DIR}/automated\ install/basic-install.sh --reconfigure --unattended || \
+        ${X_FILTER_FILES_DIR}/automated\ install/basic-install.sh --reconfigure --unattended || \
         echo -e "${basicError}" && exit 1
     fi
     echo ""

@@ -1,14 +1,14 @@
-# Pi-hole: A black hole for Internet advertisements
-# (c) 2017 Pi-hole, LLC (https://pi-hole.net)
+# X-filter: A black hole for Internet advertisements
+# (c) 2017 X-filter, LLC (https://x-filter.net)
 # Network-wide ad blocking via your own hardware.
 #
-# lighttpd config for Pi-hole
+# lighttpd config for X-filter
 #
 # This file is copyright under the latest version of the EUPL.
 # Please see LICENSE file for your rights under this license.
 
 ###############################################################################
-#     FILE AUTOMATICALLY OVERWRITTEN BY PI-HOLE INSTALL/UPDATE PROCEDURE.     #
+#     FILE AUTOMATICALLY OVERWRITTEN BY X-FILTER INSTALL/UPDATE PROCEDURE.    #
 # ANY CHANGES MADE TO THIS FILE AFTER INSTALL WILL BE LOST ON THE NEXT UPDATE #
 #                                                                             #
 #              CHANGES SHOULD BE MADE IN A SEPARATE CONFIG FILE:              #
@@ -28,7 +28,7 @@ server.modules = (
 )
 
 server.document-root        = "/var/www/html"
-server.error-handler-404    = "pihole/index.php"
+server.error-handler-404    = "xfilter/index.php"
 server.upload-dirs          = ( "/var/cache/lighttpd/uploads" )
 server.errorlog             = "/var/log/lighttpd/error.log"
 server.pid-file             = "/var/run/lighttpd.pid"
@@ -74,7 +74,7 @@ fastcgi.server = ( ".php" =>
 $HTTP["url"] =~ "^/admin/" {
 	  # Create a response header for debugging using curl -I
     setenv.add-response-header = (
-        "X-Pi-hole" => "The Pi-hole Web interface is working!",
+        "X-X-filter" => "The X-filter Web interface is working!",
         "X-Frame-Options" => "DENY"
     )
 

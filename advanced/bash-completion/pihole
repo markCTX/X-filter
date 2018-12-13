@@ -1,4 +1,4 @@
-_pihole() {
+_xfilter() {
 	local cur prev opts opts_admin opts_checkout opts_chronometer opts_debug opts_interface  opts_logging opts_privacy opts_query opts_update opts_version
 	COMPREPLY=()
 	cur="${COMP_WORDS[COMP_CWORD]}"
@@ -6,8 +6,8 @@ _pihole() {
 	prev2="${COMP_WORDS[COMP_CWORD-2]}"
 
 	case "${prev}" in
-		"pihole")
-			opts="admin blacklist checkout chronometer debug disable enable flush help logging query reconfigure regex restartdns status tail uninstall updateGravity updatePihole version wildcard whitelist"
+		"xfilter")
+			opts="admin blacklist checkout chronometer debug disable enable flush help logging query reconfigure regex restartdns status tail uninstall updateGravity updateXfilter version wildcard whitelist"
 			COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 		;;
 		"whitelist"|"blacklist"|"wildcard"|"regex")
@@ -38,12 +38,12 @@ _pihole() {
 			opts_query="-adlist -all -exact"
 			COMPREPLY=( $(compgen -W "${opts_query}" -- ${cur}) )
 		;;
-		"updatePihole"|"-up")
+		"updateXfilter"|"-up")
 			opts_update="--check-only"
 			COMPREPLY=( $(compgen -W "${opts_update}" -- ${cur}) )
 		;;
 		"version")
-			opts_version="\--admin \--current \--ftl \--hash \--latest \--pihole"
+			opts_version="\--admin \--current \--ftl \--hash \--latest \--xfilter"
 			COMPREPLY=( $(compgen -W "${opts_version}" -- ${cur}) )
 		;;
 		"interface")
@@ -76,4 +76,4 @@ _pihole() {
 	esac
 	return 0
 }
-complete -F _pihole pihole
+complete -F _xfilter xfilter
